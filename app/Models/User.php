@@ -1,0 +1,34 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Notifications\Notifiable;
+
+class User extends Authenticatable
+{
+    use HasFactory, Notifiable;
+
+    protected $fillable = [
+        'name',
+        'email',
+        'password',
+        'google_id',
+        'role',
+        'no_hp',
+    ];
+
+    // Relasi kalau user ini adalah Mitra (1 Mitra punya banyak Lapangan)
+    public function lapangans()
+    {
+        // Harus sebutin 'mitra_id' karena kita gak pake default 'user_id'
+        return $this->hasMany(Lapangan::class, 'mitra_id');
+    }
+
+    // Relasi kalau user ini adalah Penyewa (1 Penyewa punya banyak Booking)
+    public function bookings()
+    {
+        return $this->hasMany(Booking::class, 'penyewa_id');
+    }
+}
