@@ -59,7 +59,7 @@
                         <input id="email" type="email" name="email" :value="old('email')" required autofocus
                             autocomplete="username"
                             class="w-full px-4 py-3 rounded-xl bg-white/5 border border-blue-800 text-white placeholder-blue-600 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all shadow-inner"
-                            placeholder="mail@lapanginaja.com">
+                            placeholder="Masukkan Email">
                         <x-input-error :messages="$errors->get('email')" class="mt-2 text-red-400 text-sm" />
                     </div>
 
@@ -69,7 +69,7 @@
                             <input id="password" type="password" name="password" required
                                 autocomplete="current-password"
                                 class="w-full px-4 py-3 pr-12 rounded-xl bg-white/5 border border-blue-800 text-white placeholder-blue-600 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all shadow-inner"
-                                placeholder="••••••••••••">
+                                placeholder="Masukkan Password">
 
                             <button type="button" onclick="togglePassword()"
                                 class="absolute inset-y-0 right-0 px-4 flex items-center text-blue-400 hover:text-orange-400 transition-colors focus:outline-none">
