@@ -28,6 +28,13 @@ jobs:
       - name: Install Composer dependencies
         run: composer install --no-progress --prefer-dist
 
+      # --- TAMBAHKAN DUA BARIS INI (SETUP NODE & BUILD VITE) ---
+      - name: Install NPM Dependencies & Build Vite
+        run: |
+          npm install
+          npm run build
+      # ---------------------------------------------------------
+
       - name: Copy .env
         run: cp .env.example .env
 
