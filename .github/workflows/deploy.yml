@@ -109,26 +109,23 @@ jobs:
           port: 22
           script: |
             set -e
-
             echo "🚀 Mulai deployment..."
-
-            # Login ke GHCR
             echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-
-            # Masuk ke folder project
+            
             cd /home/${{ secrets.SERVER_USER }}/RPL2B-kelompok-6
 
+            # Matikan container lama dan hapus network bekasnya
+            docker compose down || true
+            
             # Pull image terbaru
             docker pull ghcr.io/${{ github.repository }}:latest
 
-            # Update container tanpa downtime besar
+            # Jalankan ulang dari nol
             docker compose up -d --remove-orphans
 
-            # Tunggu container siap
-            echo "⏳ Menunggu container ready..."
+            echo "⏳ Menunggu database siap (40 detik)..."
             sleep 40
 
-            # Jalankan migrasi database
+            # Jalankan migrasi
             docker compose exec -T app php artisan migrate --force --no-interaction
-
             echo "✅ Deployment selesai!"
