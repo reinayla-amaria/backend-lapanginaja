@@ -20,7 +20,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/dashboard', function () {
         $user = Auth::user();
         $data = [];
-
+        // SATPAM PENYEWA: Kalau dia penyewa, langsung tendang!
+        if ($user->role === 'penyewa') {
+            abort(403, 'Woy bang! Lu cuma penyewa, dilarang masuk ke ruang admin!');
+        }
         // Kalau yang login ADMIN, sedot data global
         if ($user->role === 'admin') {
             $data['total_mitra'] = User::where('role', 'mitra')->count();
@@ -48,7 +51,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         return view('dashboard', $data);
     })->middleware(['auth', 'verified'])->name('dashboard');
-    
+
     // Route CRUD Lapangan (Khusus Mitra)
     Route::get('/lapangan', [LapanganController::class, 'index'])->name('lapangan.index');
     Route::get('/lapangan/create', [LapanganController::class, 'create'])->name('lapangan.create');
