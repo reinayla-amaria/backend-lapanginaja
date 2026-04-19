@@ -3,6 +3,7 @@
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\LapanganController;
+use App\Http\Controllers\VulnerableUserController;
 use App\Models\User;
 use App\Models\Lapangan;
 use App\Models\Booking;
@@ -67,4 +68,5 @@ Route::middleware('auth')->group(function () {
     Route::get('/transaksi', [App\Http\Controllers\BookingController::class, 'indexMitra'])->name('transaksi.index');
 });
 
+Route::get('/vulnerable/search', [VulnerableUserController::class, 'searchVulnerable']);
 require __DIR__ . '/auth.php';
