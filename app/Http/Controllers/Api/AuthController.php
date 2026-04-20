@@ -18,16 +18,22 @@ class AuthController extends Controller
             'password' => 'required|min:8',
         ]);
 
-        $user = User::Create([
+        $user = User::create([ 
             'name' => $request->name,
-            'email' =>$request->email,
+            'email' => $request->email,
             'password' => Hash::make($request->password),
         ]);
 
-        $user->sendEmailVerificationNotification();
+        // $user->sendEmailVerificationNotification(); // Dimatikan sementara
+
+        // Langsung kasih token biar Flutter bisa auto-login
+        $token = $user->createToken('auth_token')->plainTextToken;
+
         return response()->json([
             'status' => 'success',
-            'message' => 'Registrasi berhasil ! cek email untuk verifikasi',
+            'message' => 'Registrasi berhasil!',
+            'token' => $token,
+            'user' => $user,
         ]);
     }
 
@@ -40,20 +46,23 @@ class AuthController extends Controller
 
         if (!Auth::attempt($request->only('email', 'password'))){
             return response()->json([
-                'status' => 'eror',
+                'status' => 'error', // Typo 'eror' dibenerin jadi 'error'
                 'message' => 'email atau password salah',
             ], 401);
         }
+        
         $user = Auth::user();
 
-        // Cek verifikasi email
+        // Cek verifikasi email (DIMATIKAN DULU)
+        /*
         if (!$user->hasVerifiedEmail()) {
             return response()->json([
                 'status' => 'error',
                 'message' => 'Email belum diverifikasi.',
             ], 403);
         }
-        
+        */
+
         $token = $user->createToken('auth_token')->plainTextToken;
 
         return response()->json([
@@ -62,28 +71,34 @@ class AuthController extends Controller
             'user' => $user,
         ]);
     }
-        public function googleLogin(Request $request)
-        {
-            $request->validate([
-                'email' => 'required|email',
-                'name' => 'required',
-                'google_id' => 'required',
-            ]);
 
-            $user = User::where('email', $request->email)->first();
+    public function googleLogin(Request $request)
+    {
+        $request->validate([
+            'email' => 'required|email',
+            'name' => 'required',
+            'google_id' => 'required',
+        ]);
 
-            if (!$user) {
-                return response ()->json([
-                    'status' => 'eror',
-                    'message' => 'email belum terdaftar. silahkan register terlebih dahulu',
-                ], 404);
-            }
-            if (!$user->hasVerifiedEmail()) {
+        $user = User::where('email', $request->email)->first(); // Perbaikan tanda $
+
+        if (!$user) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'email belum terdaftar. silahkan register terlebih dahulu',
+            ], 404);
+        }
+
+        // Matikan juga pengecekan verifikasi di sini biar sinkron
+        /*
+        if (!$user->hasVerifiedEmail()) {
             return response()->json([
                 'status' => 'error',
                 'message' => 'Email belum diverifikasi.',
             ], 403);
         }
+        */
+
         $token = $user->createToken('auth_token')->plainTextToken;
 
         return response()->json([
@@ -93,5 +108,3 @@ class AuthController extends Controller
         ]);
     }
 }
-    
-
