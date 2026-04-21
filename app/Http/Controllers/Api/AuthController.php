@@ -89,15 +89,14 @@ class AuthController extends Controller
             ], 404);
         }
 
-        // Matikan juga pengecekan verifikasi di sini biar sinkron
-        /*
+        
         if (!$user->hasVerifiedEmail()) {
             return response()->json([
                 'status' => 'error',
                 'message' => 'Email belum diverifikasi.',
             ], 403);
         }
-        */
+        
 
         $token = $user->createToken('auth_token')->plainTextToken;
 
