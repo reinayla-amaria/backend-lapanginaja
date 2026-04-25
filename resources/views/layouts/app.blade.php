@@ -31,7 +31,7 @@
 
                 {{-- ================= MENU KHUSUS SUPER ADMIN ================= --}}
                 @if(Auth::user()->role === 'admin')
-                    <a href="#"
+                    <a href="{{ route('mitra.index') }}"
                         class="flex items-center gap-3 px-4 py-3 rounded-lg text-lg transition-colors hover:bg-blue-700">
                         Kelola Mitra
                     </a>
