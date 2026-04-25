@@ -135,9 +135,16 @@ jobs:
             # Jalankan ulang dari nol
             docker compose up -d --remove-orphans
 
-            echo "⏳ Menunggu database siap (40 detik)..."
-            sleep 40
+           echo "⏳ Menunggu database benar-benar siap..."
+            # Script buat nunggu sampai status container db jadi 'healthy'
+            for i in {1..20}; do
+              if [ "$(docker inspect -f '{{.State.Health.Status}}' db_lapangan)" == "healthy" ]; then
+                echo "✅ Database siap!"
+                break
+              fi
+              echo "Database belum siap, nunggu 5 detik lagi... ($i/20)"
+              sleep 5
+            done
 
-            # Jalankan migrasi
+            # Baru jalanin migrasi
             docker compose exec -T app php artisan migrate --force --no-interaction
-            echo "✅ Deployment selesai!"
