@@ -1,34 +1,54 @@
 services:
   app:
-    image: ghcr.io/reinayla-amaria/backend-lapanginaja:latest
-    container_name: lapanginaja
+    image: ghcr.io/${GITHUB_REPOSITORY:-reinayla-amaria/backend-lapanginaja}:latest
+    container_name: lapanginaja_app # Biar namanya sama kayak log lu sebelumnya
     restart: always
     ports:
       - "8080:80"
     env_file:
       - .env
     depends_on:
-      - db
+      db:
+        condition: service_healthy # Nunggu DB beneran siap sblm app jalan
     networks:
       - app-network
+    # Tambahan biar RAM ga disedot semua (opsional, buka comment klo RAM VPS kecil)
+    # deploy:
+    #   resources:
+    #     limits:
+    #       memory: 512M
 
   db:
     image: mysql:8.0
     container_name: db_lapangan
     restart: always
+    ports:
+      # Kalo port 3306 udah dipake kelompok lain, ganti angka yg KIRI
+      # Contoh: "3309:3306"
+      - "3306:3306" 
     environment:
       MYSQL_DATABASE: ${DB_DATABASE}
       MYSQL_USER: ${DB_USERNAME}
       MYSQL_PASSWORD: ${DB_PASSWORD}
-      MYSQL_ROOT_PASSWORD: rootpasswordharusnyaunik
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:-rootpasswordharusnyaunik} # Ambil dr .env klo ada
     volumes:
       - db_data:/var/lib/mysql
     networks:
       - app-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    # Tambahan limit RAM (opsional)
+    # deploy:
+    #   resources:
+    #     limits:
+    #       memory: 512M
 
 volumes:
   db_data:
 
 networks:
   app-network:
-
