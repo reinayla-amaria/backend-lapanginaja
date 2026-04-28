@@ -112,8 +112,13 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
           port: 22
+          # 👇 INI TAMBAHAN UTAMANYA BIAR GAK TIMEOUT 10 MENIT
+          command_timeout: 30m 
           script: |
             set -e
+            # 👇 INI BIAR LOG DI GITHUB ACTIONS LEBIH DETAIL (NUNJUKIN PERINTAH YANG LAGI JALAN)
+            set -x 
+            
             echo "🚀 Mulai deployment..."
             
             # Login ke GHCR
