@@ -142,7 +142,7 @@ jobs:
             echo "⏳ Menunggu database benar-benar sehat..."
             # Loop untuk mengecek status 'healthy'
             for i in {1..20}; do
-              STATUS=$(docker inspect --format='{{ '{{' }} .State.Health.Status {{ '}}' }}' db_lapangan || echo "starting")
+            STATUS=$(docker inspect --format='{{.State.Health.Status}}' db_lapangan || echo "starting")
               if [ "$STATUS" == "healthy" ]; then
                 echo "✅ Database siap!"
                 break
