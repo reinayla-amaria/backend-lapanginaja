@@ -18,7 +18,7 @@ services:
     #     limits:
     #       memory: 512M
 
- db:
+  db:
     image: mysql:8.0
     container_name: db_lapangan
     restart: always
