@@ -5,10 +5,10 @@
                 <h2 class="text-3xl font-extrabold text-gray-800">Kelola Mitra Arena</h2>
                 <p class="text-base text-gray-500 mt-2">Daftar seluruh pemilik GOR yang terdaftar di LapanginAja.</p>
             </div>
-            <button
-                class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg text-base font-bold transition-all shadow-sm">
+            <a href="{{ route('mitra.create') }}"
+                class="inline-block bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg text-base font-bold transition-all shadow-sm">
                 + Tambah Mitra
-            </button>
+            </a>
         </div>
 
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
