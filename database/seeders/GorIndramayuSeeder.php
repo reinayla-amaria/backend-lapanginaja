@@ -34,8 +34,6 @@ class GorIndramayuSeeder extends Seeder
         ];
 
         foreach ($daftarGor as $index => $gor) {
-            // 1. Bikin Akun Mitranya Dulu
-            // Emailnya otomatis misal: mitra1@lapanginaja.com, mitra2@lapanginaja.com, dst.
             $mitra = User::create([
                 'name' => $gor['nama'],
                 'email' => 'mitra' . ($index + 1) . '@lapanginaja.com',

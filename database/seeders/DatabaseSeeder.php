@@ -14,8 +14,12 @@ class DatabaseSeeder extends Seeder
         User::create([
             'name' => 'Super Admin',
             'email' => 'admin@lapanginaja.com',
-            'password' => Hash::make('password123'), 
+            'password' => Hash::make('password123'),
             'role' => 'admin',
+        ]);
+
+        $this->call([
+            GorIndramayuSeeder::class,
         ]);
     }
 }
