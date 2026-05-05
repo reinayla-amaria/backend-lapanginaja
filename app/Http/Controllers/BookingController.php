@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Http\Controllers;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 use App\Models\Booking;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
@@ -85,15 +86,81 @@ class BookingController extends Controller
 
         return response()->json(['message' => 'Laporan diterima!']);
     }
+    public function jadwal()
+    {
+        $mitraId = auth()->id();
+        // Tarik lapangan + bookingan hari ini
+        $lapangans = \App\Models\Lapangan::where('mitra_id', $mitraId)
+            ->with([
+                'bookings' => function ($q) {
+                    $q->whereDate('tanggal_main', now())
+                        ->where('status', '!=', 'batal');
+                },
+                'bookings.user'
+            ])
+            ->get();
+
+        return view('mitra.jadwal.index', compact('lapangans'));
+    }
     public function indexMitra()
     {
-        $bookings = Booking::with(['lapangan', 'user', 'payment'])
-            ->whereHas('lapangan', function ($query) {
-                $query->where('mitra_id', Auth::id());
-            })
-            ->orderBy('created_at', 'desc')
-            ->get();
+        $user = Auth::user();
+
+        if ($user->role === 'admin') {
+            $bookings = Booking::with(['user', 'lapangan.mitra'])->latest()->get();
+        } else if ($user->role === 'mitra') {
+            $bookings = Booking::with(['user', 'lapangan'])
+                ->whereHas('lapangan', function ($query) use ($user) {
+                    $query->where('mitra_id', $user->id);
+                })
+                ->latest()
+                ->get();
+        } else {
+            abort(403, 'Akses Ditolak');
+        }
 
         return view('transaksi.index', compact('bookings'));
     }
+    public function exportCSV()
+    {
+        $bookings = Booking::with(['user', 'lapangan.mitra'])->latest()->get();
+
+        $response = new StreamedResponse(function () use ($bookings) {
+            $handle = fopen('php://output', 'w');
+
+            fputcsv($handle, [
+                'ID Pesanan',
+                'Nama Penyewa',
+                'No HP',
+                'Nama GOR',
+                'Nama Lapangan',
+                'Tanggal Main',
+                'Jam Main',
+                'Total Bayar (Rp)',
+                'Status'
+            ]);
+
+            foreach ($bookings as $booking) {
+                fputcsv($handle, [
+                    '#' . $booking->id,
+                    $booking->user->name ?? 'Penyewa',
+                    $booking->user->phone ?? '-',
+                    $booking->lapangan->mitra->name ?? 'GOR Unknown',
+                    $booking->lapangan->nama_lapangan ?? 'Arena',
+                    $booking->tanggal_main,
+                    $booking->jam_mulai . ' - ' . $booking->jam_selesai,
+                    $booking->total_harga ?? 0,
+                    strtoupper($booking->status)
+                ]);
+            }
+
+            fclose($handle);
+        });
+
+        $response->headers->set('Content-Type', 'text/csv');
+        $response->headers->set('Content-Disposition', 'attachment; filename="laporan_transaksi_lapanginaja.csv"');
+
+        return $response;
+    }
+
 }

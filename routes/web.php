@@ -29,7 +29,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
             $data['total_mitra'] = User::where('role', 'mitra')->count();
             $data['total_penyewa'] = User::where('role', 'penyewa')->count(); // Asumsi role pengguna mobile = penyewa
             $data['total_transaksi'] = Booking::whereIn('status', ['sukses', 'dibayar'])->count();
-            $data['mitra_baru'] = User::where('role', 'mitra')->latest()->take(5)->get(); // Ambil 5 mitra terbaru
+            $data['mitra_baru'] = User::where('role', 'mitra')->latest()->take(5)->get();
         } elseif ($user->role === 'mitra') {
             $data['lapangan_aktif'] = Lapangan::where('mitra_id', $user->id)->count();
 
@@ -70,7 +70,11 @@ Route::middleware('auth')->group(function () {
 
     // Route Transaksi
     Route::get('/transaksi', [App\Http\Controllers\BookingController::class, 'indexMitra'])->name('transaksi.index');
+    // Route Transaksi yang udah ada
+    Route::get('/transaksi', [App\Http\Controllers\BookingController::class, 'indexMitra'])->name('transaksi.index');
 
+    // TAMBAHIN INI DI BAWAHNYA
+    Route::get('/transaksi/export', [App\Http\Controllers\BookingController::class, 'exportCSV'])->name('transaksi.export');
     // === INI ROUTE CRUD KELOLA MITRA BARU NYA BANG ===
     Route::get('/kelola-mitra', [MitraController::class, 'index'])->name('mitra.index');
     Route::get('/kelola-mitra/create', [MitraController::class, 'create'])->name('mitra.create');
