@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\LapanganController;
 use App\Http\Controllers\BookingController;
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\LapanganApiController;
 
 
 
@@ -17,3 +18,4 @@ Route::post('/midtrans-callback', [BookingController::class, 'callbackAPI']);
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/google-login', [AuthController::class, 'googleLogin']);
+Route::get('/lapangan', [LapanganApiController::class, 'index']);
