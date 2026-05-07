@@ -6,14 +6,14 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\LapanganController;
 use App\Http\Controllers\VulnerableUserController;
+use App\Http\Controllers\BookingController;
 use App\Models\User;
 use App\Models\Lapangan;
 use App\Models\Booking;
 use Carbon\Carbon;
 
-Route::get('/', function () {
-    return view('welcome');
-});
+// Begitu buka web, langsung tendang ke halaman login
+Route::redirect('/', '/login');
 
 Route::middleware(['auth', 'verified'])->group(function () {
 
@@ -27,7 +27,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         if ($user->role === 'admin') {
             $data['total_mitra'] = User::where('role', 'mitra')->count();
-            $data['total_penyewa'] = User::where('role', 'penyewa')->count(); // Asumsi role pengguna mobile = penyewa
+            $data['total_penyewa'] = User::where('role', 'penyewa')->count();
             $data['total_transaksi'] = Booking::whereIn('status', ['sukses', 'dibayar'])->count();
             $data['mitra_baru'] = User::where('role', 'mitra')->latest()->take(5)->get();
         } elseif ($user->role === 'mitra') {
@@ -44,17 +44,23 @@ Route::middleware(['auth', 'verified'])->group(function () {
             $data['riwayat_pesanan'] = Booking::with(['user', 'lapangan'])
                 ->whereHas('lapangan', function ($q) use ($user) {
                     $q->where('mitra_id', $user->id);
-                })->latest()->take(5)->get(); // Ambil 5 pesanan terbaru
+                })->latest()->take(5)->get();
         }
 
         return view('dashboard', $data);
     })->name('dashboard');
 
-    // Route Lapangan
+    // === Route Lapangan ===
     Route::get('/lapangan', [LapanganController::class, 'index'])->name('lapangan.index');
     Route::get('/lapangan/create', [LapanganController::class, 'create'])->name('lapangan.create');
     Route::post('/lapangan', [LapanganController::class, 'store'])->name('lapangan.store');
 
+    Route::get('/mitra/jadwal', [BookingController::class, 'jadwal'])->name('mitra.jadwal');
+    // Route yang udah ada tadi
+    Route::get('/mitra/jadwal', [BookingController::class, 'jadwal'])->name('mitra.jadwal');
+
+    // TAMBAHIN INI BANG: Route buat nge-submit pop-up edit jadwal
+    Route::post('/mitra/jadwal/update', [BookingController::class, 'updateJadwal'])->name('mitra.jadwal.update');
 });
 
 Route::middleware('auth')->group(function () {
@@ -63,19 +69,16 @@ Route::middleware('auth')->group(function () {
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
-    // Route Lapangan (Lanjutan)
+    // Route Lapangan (Lanjutan CRUD)
     Route::delete('/lapangan/{lapangan}', [LapanganController::class, 'destroy'])->name('lapangan.destroy');
     Route::get('/lapangan/{lapangan}/edit', [LapanganController::class, 'edit'])->name('lapangan.edit');
     Route::put('/lapangan/{lapangan}', [LapanganController::class, 'update'])->name('lapangan.update');
 
-    // Route Transaksi
-    Route::get('/transaksi', [App\Http\Controllers\BookingController::class, 'indexMitra'])->name('transaksi.index');
-    // Route Transaksi yang udah ada
-    Route::get('/transaksi', [App\Http\Controllers\BookingController::class, 'indexMitra'])->name('transaksi.index');
+    // Route Transaksi Mitra
+    Route::get('/transaksi', [BookingController::class, 'indexMitra'])->name('transaksi.index');
+    Route::get('/transaksi/export', [BookingController::class, 'exportCSV'])->name('transaksi.export');
 
-    // TAMBAHIN INI DI BAWAHNYA
-    Route::get('/transaksi/export', [App\Http\Controllers\BookingController::class, 'exportCSV'])->name('transaksi.export');
-    // === INI ROUTE CRUD KELOLA MITRA BARU NYA BANG ===
+    // === ROUTE CRUD KELOLA MITRA (Super Admin) ===
     Route::get('/kelola-mitra', [MitraController::class, 'index'])->name('mitra.index');
     Route::get('/kelola-mitra/create', [MitraController::class, 'create'])->name('mitra.create');
     Route::post('/kelola-mitra', [MitraController::class, 'store'])->name('mitra.store');

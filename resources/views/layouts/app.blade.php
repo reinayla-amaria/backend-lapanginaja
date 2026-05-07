@@ -48,7 +48,7 @@
                         Kelola Arena
                     </a>
 
-                    <a href="#"
+                    <a href="{{ route('mitra.jadwal') }}"
                         class="flex items-center gap-3 px-4 py-3 rounded-lg text-lg transition-colors hover:bg-blue-700">
                         Jadwal Lapangan
                     </a>

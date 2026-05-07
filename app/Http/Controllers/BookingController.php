@@ -88,38 +88,76 @@ class BookingController extends Controller
     }
     public function jadwal()
     {
-        $mitraId = auth()->id();
-        // Tarik lapangan + bookingan hari ini
-        $lapangans = \App\Models\Lapangan::where('mitra_id', $mitraId)
-            ->with([
-                'bookings' => function ($q) {
-                    $q->whereDate('tanggal_main', now())
-                        ->where('status', '!=', 'batal');
-                },
-                'bookings.user'
-            ])
+        $mitraId = Auth::id();
+        $tanggalPilih = request('tanggal', \Carbon\Carbon::today()->format('Y-m-d'));
+
+        // Ambil lapangan milik Mitra
+        $lapangans = \App\Models\Lapangan::where('mitra_id', $mitraId)->get();
+
+        // NAH INI YANG DIGANTI BANG: \App\Models\Pemesanan jadi \App\Models\Booking
+        $pemesanans = \App\Models\Booking::whereHas('lapangan', function ($q) use ($mitraId) {
+            $q->where('mitra_id', $mitraId);
+        })->whereDate('jam_mulai', $tanggalPilih)
             ->get();
 
-        return view('mitra.jadwal.index', compact('lapangans'));
-    }
-    public function indexMitra()
-    {
-        $user = Auth::user();
+        // Generate Slot Jam Operasional (Misal GOR buka jam 08:00 - 22:00)
+        $slotJadwal = [];
+        foreach ($lapangans as $lapangan) {
+            for ($jam = 8; $jam <= 21; $jam++) {
+                $jamMulai = sprintf('%02d:00', $jam);
+                $jamSelesai = sprintf('%02d:00', $jam + 1);
 
-        if ($user->role === 'admin') {
-            $bookings = Booking::with(['user', 'lapangan.mitra'])->latest()->get();
-        } else if ($user->role === 'mitra') {
-            $bookings = Booking::with(['user', 'lapangan'])
-                ->whereHas('lapangan', function ($query) use ($user) {
-                    $query->where('mitra_id', $user->id);
-                })
-                ->latest()
-                ->get();
-        } else {
-            abort(403, 'Akses Ditolak');
+                // Cek apakah slot jam ini ada di tabel Pemesanan (Booking)
+                $booking = $pemesanans->where('lapangan_id', $lapangan->id)
+                    ->filter(function ($b) use ($jamMulai) {
+                        return \Carbon\Carbon::parse($b->jam_mulai)->format('H:i') == $jamMulai;
+                    })->first();
+
+                $slotJadwal[] = (object) [
+                    'id_slot' => $lapangan->id . '-' . $jam,
+                    'lapangan' => $lapangan,
+                    'jam' => $jamMulai . ' - ' . $jamSelesai,
+                    'harga' => $lapangan->harga_per_jam,
+                    'status' => $booking ? ($booking->status == 'batal' ? 'siap dipakai' : 'dibooking') : 'siap dipakai',
+                    'booking_id' => $booking ? $booking->id : null
+                ];
+            }
         }
 
-        return view('transaksi.index', compact('bookings'));
+        return view('mitra.jadwal.index', compact('slotJadwal', 'tanggalPilih', 'lapangans'));
+    }
+    public function indexMitra(\Illuminate\Http\Request $request)
+    {
+        $mitraId = \Illuminate\Support\Facades\Auth::id();
+
+        // Nangkep parameter dari URL
+        $status = $request->query('status'); // All, pending, atau completed
+        $startDate = $request->query('start_date');
+        $endDate = $request->query('end_date');
+
+        // Tarik data booking khusus buat lapangan milik mitra ini
+        $query = \App\Models\Booking::with(['user', 'lapangan'])
+            ->whereHas('lapangan', function ($q) use ($mitraId) {
+                $q->where('mitra_id', $mitraId);
+            });
+
+        // 1. Logic Filter Tabs Status
+        if ($status == 'pending') {
+            $query->where('status', 'pending');
+        } elseif ($status == 'completed') {
+            $query->whereIn('status', ['sukses', 'lunas']); // Disesuaikan sama status di DB lu
+        }
+
+        // 2. Logic Filter Range Tanggal (Bisa cari masa lalu)
+        if ($startDate && $endDate) {
+            $query->whereBetween('tanggal_main', [$startDate, $endDate]);
+        }
+
+        // Urutin dari yang paling baru
+        $pesanans = $query->latest('created_at')->get();
+
+        // Hapus kata 'mitra.' nya bang
+        return view('transaksi.index', compact('pesanans', 'status', 'startDate', 'endDate'));
     }
     public function exportCSV()
     {
@@ -162,5 +200,51 @@ class BookingController extends Controller
 
         return $response;
     }
+    public function updateJadwal(\Illuminate\Http\Request $request)
+    {
+        $request->validate([
+            'lapangan_id' => 'required',
+            'tanggal' => 'required|date',
+            'jam_mulai' => 'required',
+            'jam_selesai' => 'required',
+            'status' => 'required'
+        ]);
 
+        // Gabungin tanggal dan jam sesuai format database (datetime)
+        $tanggalMulai = $request->tanggal . ' ' . $request->jam_mulai . ':00';
+        $tanggalSelesai = $request->tanggal . ' ' . $request->jam_selesai . ':00';
+
+        // Cari apakah di slot ini udah ada bookingan
+        $booking = \App\Models\Booking::where('lapangan_id', $request->lapangan_id)
+            ->where('jam_mulai', $tanggalMulai)
+            ->first();
+
+        if ($request->status == 'maintenance') {
+            if ($booking) {
+                // Kalau slot udah dibooking orang beneran, tolak!
+                if ($booking->status == 'sukses' || $booking->status == 'pending') {
+                    return back()->with('error', 'Gagal memblokir! Jadwal ini sudah dipesan oleh penyewa.');
+                }
+                // Kalau sebelumnya udah maintenance, ya biarin aja
+                $booking->update(['status' => 'maintenance']);
+            } else {
+                // Bikin booking 'palsu' khusus buat ngeblokir lapangan
+                \App\Models\Booking::create([
+                    'lapangan_id' => $request->lapangan_id,
+                    'penyewa_id' => \Illuminate\Support\Facades\Auth::id(), // Pake ID Mitra sebagai penanda
+                    'jam_mulai' => $tanggalMulai,
+                    'jam_selesai' => $tanggalSelesai,
+                    'status' => 'maintenance',
+                    'total_harga' => 0
+                ]);
+            }
+        } else {
+            // Kalau Mitra milih "Siap Dipakai", kita hapus aja blokiran maintenance-nya
+            if ($booking && $booking->status == 'maintenance') {
+                $booking->delete();
+            }
+        }
+
+        return back()->with('success', 'Status jadwal berhasil diperbarui!');
+    }
 }
