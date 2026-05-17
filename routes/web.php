@@ -8,11 +8,21 @@ use App\Models\Lapangan;
 use App\Models\Booking;
 use Carbon\Carbon;
 use App\Http\Controllers\Api\AuthController;
+use Illuminate\Support\Facades\Artisan;
 // Halaman depan (Welcome)
 Route::get('/', function () {
     return view('welcome');
 });
 
+Route::get('/jalanin-migrasi', function () {
+    // Jalanin perintah migrate
+    Artisan::call('migrate', ['--force' => true]);
+
+    // Kalau lu punya seeder (data bohongan), hapus garis miring dua di bawah ini:
+    // Artisan::call('db:seed', ['--force' => true]); 
+
+    return 'Wih mantap, Migrasi Database Berhasil Bang!';
+});
 // Kumpulan Route yang butuh Login (Auth)
 Route::middleware(['auth', 'verified'])->group(function () {
 
@@ -48,7 +58,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         return view('dashboard', $data);
     })->middleware(['auth', 'verified'])->name('dashboard');
-    
+
     // Route CRUD Lapangan (Khusus Mitra)
     Route::get('/lapangan', [LapanganController::class, 'index'])->name('lapangan.index');
     Route::get('/lapangan/create', [LapanganController::class, 'create'])->name('lapangan.create');
