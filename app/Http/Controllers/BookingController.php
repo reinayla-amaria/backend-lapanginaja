@@ -1,10 +1,11 @@
 <?php
 
 namespace App\Http\Controllers;
+
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use App\Models\Booking;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Http\Request;
 use App\Models\Payment;
 use Midtrans\Config;
 use Midtrans\Snap;
@@ -13,7 +14,7 @@ class BookingController extends Controller
 {
     public function checkoutAPI(Request $request)
     {
-
+        // 1. Simpan booking pake user_id (Sesuai database lu)
         $booking = Booking::create([
             'user_id' => $request->user_id,
             'lapangan_id' => $request->lapangan_id,
@@ -31,14 +32,19 @@ class BookingController extends Controller
 
         $order_id = 'BOOK-' . $booking->id . '-' . time();
 
+        // 2. Tarik data penyewa dari tabel User berdasarkan user_id
+        $penyewa = \App\Models\User::find($request->user_id);
+
         $params = [
             'transaction_details' => [
                 'order_id' => $order_id,
                 'gross_amount' => $booking->total_harga,
             ],
             'customer_details' => [
-                'first_name' => 'Penyewa',
-                'email' => 'penyewa@example.com',
+                // 3. Nama & Email dinamis buat resi Midtrans
+                'first_name' => $penyewa ? $penyewa->name : 'Penyewa',
+                'email' => $penyewa ? $penyewa->email : 'penyewa@lapanginaja.com',
+                'phone' => $penyewa ? $penyewa->no_hp : '08000000000'
             ]
         ];
 
@@ -72,7 +78,6 @@ class BookingController extends Controller
                 if ($request->transaction_status == 'capture' || $request->transaction_status == 'settlement') {
 
                     $payment->update(['status' => 'sukses']);
-
                     $payment->booking->update(['status' => 'dibayar']);
 
                 } elseif ($request->transaction_status == 'cancel' || $request->transaction_status == 'deny' || $request->transaction_status == 'expire') {
@@ -86,6 +91,7 @@ class BookingController extends Controller
 
         return response()->json(['message' => 'Laporan diterima!']);
     }
+
     public function jadwal()
     {
         $mitraId = Auth::id();
@@ -94,8 +100,7 @@ class BookingController extends Controller
         // Ambil lapangan milik Mitra
         $lapangans = \App\Models\Lapangan::where('mitra_id', $mitraId)->get();
 
-        // NAH INI YANG DIGANTI BANG: \App\Models\Pemesanan jadi \App\Models\Booking
-        $pemesanans = \App\Models\Booking::whereHas('lapangan', function ($q) use ($mitraId) {
+        $pemesanans = Booking::whereHas('lapangan', function ($q) use ($mitraId) {
             $q->where('mitra_id', $mitraId);
         })->whereDate('jam_mulai', $tanggalPilih)
             ->get();
@@ -107,7 +112,7 @@ class BookingController extends Controller
                 $jamMulai = sprintf('%02d:00', $jam);
                 $jamSelesai = sprintf('%02d:00', $jam + 1);
 
-                // Cek apakah slot jam ini ada di tabel Pemesanan (Booking)
+                // Cek apakah slot jam ini ada di tabel Booking
                 $booking = $pemesanans->where('lapangan_id', $lapangan->id)
                     ->filter(function ($b) use ($jamMulai) {
                         return \Carbon\Carbon::parse($b->jam_mulai)->format('H:i') == $jamMulai;
@@ -126,9 +131,10 @@ class BookingController extends Controller
 
         return view('mitra.jadwal.index', compact('slotJadwal', 'tanggalPilih', 'lapangans'));
     }
-    public function indexMitra(\Illuminate\Http\Request $request)
+
+    public function indexMitra(Request $request)
     {
-        $mitraId = \Illuminate\Support\Facades\Auth::id();
+        $mitraId = Auth::id();
 
         // Nangkep parameter dari URL
         $status = $request->query('status'); // All, pending, atau completed
@@ -136,7 +142,7 @@ class BookingController extends Controller
         $endDate = $request->query('end_date');
 
         // Tarik data booking khusus buat lapangan milik mitra ini
-        $query = \App\Models\Booking::with(['user', 'lapangan'])
+        $query = Booking::with(['user', 'lapangan'])
             ->whereHas('lapangan', function ($q) use ($mitraId) {
                 $q->where('mitra_id', $mitraId);
             });
@@ -145,10 +151,10 @@ class BookingController extends Controller
         if ($status == 'pending') {
             $query->where('status', 'pending');
         } elseif ($status == 'completed') {
-            $query->whereIn('status', ['sukses', 'lunas']); // Disesuaikan sama status di DB lu
+            $query->whereIn('status', ['sukses', 'lunas', 'dibayar']);
         }
 
-        // 2. Logic Filter Range Tanggal (Bisa cari masa lalu)
+        // 2. Logic Filter Range Tanggal
         if ($startDate && $endDate) {
             $query->whereBetween('tanggal_main', [$startDate, $endDate]);
         }
@@ -156,9 +162,9 @@ class BookingController extends Controller
         // Urutin dari yang paling baru
         $pesanans = $query->latest('created_at')->get();
 
-        // Hapus kata 'mitra.' nya bang
         return view('transaksi.index', compact('pesanans', 'status', 'startDate', 'endDate'));
     }
+
     public function exportCSV()
     {
         $bookings = Booking::with(['user', 'lapangan.mitra'])->latest()->get();
@@ -182,7 +188,7 @@ class BookingController extends Controller
                 fputcsv($handle, [
                     '#' . $booking->id,
                     $booking->user->name ?? 'Penyewa',
-                    $booking->user->phone ?? '-',
+                    $booking->user->no_hp ?? '-',
                     $booking->lapangan->mitra->name ?? 'GOR Unknown',
                     $booking->lapangan->nama_lapangan ?? 'Arena',
                     $booking->tanggal_main,
@@ -200,7 +206,8 @@ class BookingController extends Controller
 
         return $response;
     }
-    public function updateJadwal(\Illuminate\Http\Request $request)
+
+    public function updateJadwal(Request $request)
     {
         $request->validate([
             'lapangan_id' => 'required',
@@ -215,23 +222,23 @@ class BookingController extends Controller
         $tanggalSelesai = $request->tanggal . ' ' . $request->jam_selesai . ':00';
 
         // Cari apakah di slot ini udah ada bookingan
-        $booking = \App\Models\Booking::where('lapangan_id', $request->lapangan_id)
+        $booking = Booking::where('lapangan_id', $request->lapangan_id)
             ->where('jam_mulai', $tanggalMulai)
             ->first();
 
         if ($request->status == 'maintenance') {
             if ($booking) {
                 // Kalau slot udah dibooking orang beneran, tolak!
-                if ($booking->status == 'sukses' || $booking->status == 'pending') {
+                if (in_array($booking->status, ['sukses', 'pending', 'dibayar'])) {
                     return back()->with('error', 'Gagal memblokir! Jadwal ini sudah dipesan oleh penyewa.');
                 }
                 // Kalau sebelumnya udah maintenance, ya biarin aja
                 $booking->update(['status' => 'maintenance']);
             } else {
-                // Bikin booking 'palsu' khusus buat ngeblokir lapangan
-                \App\Models\Booking::create([
+                // Bikin booking 'palsu' khusus buat ngeblokir lapangan pake user_id
+                Booking::create([
                     'lapangan_id' => $request->lapangan_id,
-                    'penyewa_id' => \Illuminate\Support\Facades\Auth::id(), // Pake ID Mitra sebagai penanda
+                    'user_id' => Auth::id(), // SUDAH DIGANTI JADI user_id
                     'jam_mulai' => $tanggalMulai,
                     'jam_selesai' => $tanggalSelesai,
                     'status' => 'maintenance',
