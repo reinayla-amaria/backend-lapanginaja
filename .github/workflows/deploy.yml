@@ -111,7 +111,7 @@ jobs:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
-          port: 22
+          port: 8022
           # 👇 INI TAMBAHAN UTAMANYA BIAR GAK TIMEOUT 10 MENIT
           command_timeout: 30m 
           script: |

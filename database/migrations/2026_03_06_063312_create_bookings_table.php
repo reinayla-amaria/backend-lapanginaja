@@ -22,8 +22,7 @@ return new class extends Migration {
             $table->time('jam_selesai');
 
             $table->integer('total_harga');
-            $table->enum('status', ['pending', 'dibayar', 'batal', 'selesai'])->default('pending');
-
+            $table->enum('status', ['pending', 'dibayar', 'sukses', 'batal', 'gagal', 'maintenance'])->default('pending');
             $table->timestamps();
         });
     }
