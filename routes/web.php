@@ -18,20 +18,16 @@ Route::get('/jalanin-migrasi', function () {
     // Jalanin perintah migrate
     Artisan::call('migrate', ['--force' => true]);
 
-    // Kalau lu punya seeder (data bohongan), hapus garis miring dua di bawah ini:
-    // Artisan::call('db:seed', ['--force' => true]); 
+
 
     return 'Wih mantap, Migrasi Database Berhasil Bang!';
 });
-// Kumpulan Route yang butuh Login (Auth)
 Route::middleware(['auth', 'verified'])->group(function () {
 
-    // Route Dashboard
     Route::get('/dashboard', function () {
         $user = Auth::user();
         $data = [];
 
-        // Kalau yang login ADMIN, sedot data global
         if ($user->role === 'admin') {
             $data['total_mitra'] = User::where('role', 'mitra')->count();
             $data['total_penyewa'] = User::where('role', 'penyewa')->count(); // Asumsi role pengguna mobile = penyewa
