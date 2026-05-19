@@ -76,7 +76,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/transaksi', [App\Http\Controllers\BookingController::class, 'indexMitra'])->name('transaksi.index');
 
     // TAMBAHIN RUTE INI BANG BIAR ROBOTNYA GAK 404 LAGI:
-    Route::get('/transaksi/export', [App\Http\Controllers\BookingController::class, 'export'])->name('transaksi.export');
+    Route::get('/transaksi/export', [App\Http\Controllers\BookingController::class, 'exportCSV'])->name('transaksi.export');
 });
 require __DIR__ . '/auth.php';
 
