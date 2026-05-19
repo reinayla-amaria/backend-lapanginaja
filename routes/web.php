@@ -63,6 +63,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 });
 
 // Route Profil bawaan Laravel
+// Route Profil bawaan Laravel
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
@@ -70,8 +71,12 @@ Route::middleware('auth')->group(function () {
     Route::delete('/lapangan/{lapangan}', [LapanganController::class, 'destroy'])->name('lapangan.destroy');
     Route::get('/lapangan/{lapangan}/edit', [LapanganController::class, 'edit'])->name('lapangan.edit');
     Route::put('/lapangan/{lapangan}', [LapanganController::class, 'update'])->name('lapangan.update');
-    Route::get('/transaksi', [App\Http\Controllers\BookingController::class, 'indexMitra'])->name('transaksi.index');
-});
 
+    // Rute Transaksi yang udah ada
+    Route::get('/transaksi', [App\Http\Controllers\BookingController::class, 'indexMitra'])->name('transaksi.index');
+
+    // TAMBAHIN RUTE INI BANG BIAR ROBOTNYA GAK 404 LAGI:
+    Route::get('/transaksi/export', [App\Http\Controllers\BookingController::class, 'export'])->name('transaksi.export');
+});
 require __DIR__ . '/auth.php';
 
