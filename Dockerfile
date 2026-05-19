@@ -32,11 +32,9 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 WORKDIR /var/www/html
 
 # --- OPTIMASI CACHING ---
-# Copy file package manager duluan
 COPY composer.json composer.lock package.json package-lock.json* ./
 
 # Install dependency backend & frontend
-# (composer install tanpa script & autoloader dulu biar cache jalan)
 RUN composer install --no-scripts --no-autoloader --no-dev
 RUN npm install
 
@@ -54,12 +52,8 @@ RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cac
 COPY docker/nginx.conf /etc/nginx/nginx.conf
 COPY docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
-EXPOSE 80
+# Set pintu port kontainer ke 8080 agar pas dengan Railway
+EXPOSE 8080
 
-RUN apk add --no-cache gettext
-
-# Hapus atau comment EXPOSE 80 karena port di Railway dinamis
-# EXPOSE 80 
-
-# Jalankan perintah envsubst untuk terjemahin ${PORT} di nginx.conf sebelum nyalain supervisor
-CMD sh -c "envsubst '\$PORT' < /etc/nginx/nginx.conf > /etc/nginx/nginx.conf && /usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf"
+# Jalankan supervisor untuk handle Nginx dan PHP-FPM secara bersamaan
+CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
