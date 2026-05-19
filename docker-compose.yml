@@ -23,7 +23,7 @@ services:
     container_name: db_lapangan
     restart: always
     ports:
-      - "3306:3306"
+      - "3307:3306"
     command: --performance_schema=OFF --innodb_buffer_pool_size=64M
     environment:
       MYSQL_DATABASE: ${DB_DATABASE}
