@@ -74,7 +74,7 @@ Route::middleware('auth')->group(function () {
 
     // Rute Transaksi yang udah ada
     Route::get('/transaksi', [App\Http\Controllers\BookingController::class, 'indexMitra'])->name('transaksi.index');
-
+    Route::get('/mitra', [App\Http\Controllers\MitraController::class, 'index'])->name('mitra.index');
     // TAMBAHIN RUTE INI BANG BIAR ROBOTNYA GAK 404 LAGI:
     Route::get('/transaksi/export', [App\Http\Controllers\BookingController::class, 'exportCSV'])->name('transaksi.export');
 });
