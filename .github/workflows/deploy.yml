@@ -112,7 +112,6 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
           port: 8022
-          # 👇 INI TAMBAHAN UTAMANYA BIAR GAK TIMEOUT 10 MENIT
           command_timeout: 30m 
           script: |
             set -e
@@ -137,7 +136,7 @@ jobs:
             docker pull ghcr.io/${{ github.repository }}:latest
 
             # Jalankan ulang
-            docker compose -f docker-compose.yml up -d --remove-orphans
+            docker-compose -f docker-compose.yml up -d --remove-orphans
 
             echo "⏳ Menunggu database benar-benar sehat..."
             # Loop untuk mengecek status 'healthy'
@@ -157,6 +156,6 @@ jobs:
 
             # Jalankan migrasi database
             echo "🏃 Jalankan migrasi..."
-            docker compose -f docker-compose.yml exec -T app php artisan migrate --force --no-interaction
+            docker-compose -f docker-compose.yml exec -T app php artisan migrate --force --no-interaction
 
             echo "✅ sudahh!"
