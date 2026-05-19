@@ -56,4 +56,10 @@ COPY docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
 EXPOSE 80
 
-CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
+RUN apk add --no-cache gettext
+
+# Hapus atau comment EXPOSE 80 karena port di Railway dinamis
+# EXPOSE 80 
+
+# Jalankan perintah envsubst untuk terjemahin ${PORT} di nginx.conf sebelum nyalain supervisor
+CMD sh -c "envsubst '\$PORT' < /etc/nginx/nginx.conf > /etc/nginx/nginx.conf && /usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf"
