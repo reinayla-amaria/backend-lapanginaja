@@ -82,7 +82,8 @@ Route::middleware('auth')->group(function () {
     Route::get('/jadwal-lapangan', [App\Http\Controllers\BookingController::class, 'jadwal'])->name('mitra.jadwal');
     Route::post('/jadwal-lapangan/update', [App\Http\Controllers\BookingController::class, 'updateJadwal'])->name('mitra.jadwal.update');
     Route::get('/transaksi/export', [App\Http\Controllers\BookingController::class, 'exportCSV'])->name('transaksi.export');
-});
+
+    });
 
 require __DIR__ . '/auth.php';
 
