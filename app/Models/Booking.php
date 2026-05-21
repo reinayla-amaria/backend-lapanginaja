@@ -3,6 +3,8 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Booking extends Model
 {
@@ -16,20 +18,17 @@ class Booking extends Model
         'status'
     ];
 
-    // Relasi: Bookingan ini punyanya siapa?
-    public function user()
+    public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }
 
-    // Relasi: Bookingan ini mesen lapangan yang mana?
-    public function lapangan()
+    public function lapangan(): BelongsTo
     {
         return $this->belongsTo(Lapangan::class);
     }
 
-    // Relasi: 1 Bookingan cuma punya 1 Pembayaran (One-to-One)
-    public function payment()
+    public function payment(): HasOne
     {
         return $this->hasOne(Payment::class);
     }
