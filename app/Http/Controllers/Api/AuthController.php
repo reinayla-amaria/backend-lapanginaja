@@ -38,40 +38,68 @@ class AuthController extends Controller
     }
 
     public function login(Request $request)
-    {
-        $request->validate([
-            'email' => 'required|email',
-            'password' => 'required',
-        ]);
+{
+    $request->validate([
+        'email' => 'required|email',
+        'password' => 'required',
+    ]);
 
-        if (!Auth::attempt($request->only('email', 'password'))){
-            return response()->json([
-                'status' => 'error', // Typo 'eror' dibenerin jadi 'error'
-                'message' => 'email atau password salah',
-            ], 401);
-        }
-        
-        $user = Auth::user();
+    $user = User::where('email', $request->email)->first();
 
-        // Cek verifikasi email (DIMATIKAN DULU)
-        /*
-        if (!$user->hasVerifiedEmail()) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Email belum diverifikasi.',
-            ], 403);
-        }
-        */
-
-        $token = $user->createToken('auth_token')->plainTextToken;
-
+    // Cek apakah akun sedang terkunci
+    if ($user && $user->locked_until && now()->lt($user->locked_until)) {
+        $menitSisa = now()->diffInMinutes($user->locked_until) + 1;
         return response()->json([
-            'status' => 'success',
-            'token' => $token,
-            'user' => $user,
-        ]);
+            'status' => 'error',
+            'message' => "Akun terkunci. Coba lagi dalam {$menitSisa} menit.",
+        ], 429);
     }
 
+    // Cek kredensial
+    if (!Auth::attempt($request->only('email', 'password'))) {
+        if ($user) {
+            $user->login_attempts += 1;
+
+            if ($user->login_attempts >= 5) {
+                $user->locked_until = now()->addMinutes(10);
+                $user->login_attempts = 0;
+                $user->save();
+
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Akun terkunci selama 10 menit karena 5 kali percobaan login gagal.',
+                ], 429);
+            }
+
+            $sisaCobaan = 5 - $user->login_attempts;
+            $user->save();
+
+            return response()->json([
+                'status' => 'error',
+                'message' => "Email atau password salah. Sisa percobaan: {$sisaCobaan}.",
+            ], 401);
+        }
+
+        return response()->json([
+            'status' => 'error',
+            'message' => 'Email atau password salah.',
+        ], 401);
+    }
+
+    // Login berhasil — reset counter
+    $user = Auth::user();
+    $user->login_attempts = 0;
+    $user->locked_until = null;
+    $user->save();
+
+    $token = $user->createToken('auth_token')->plainTextToken;
+
+    return response()->json([
+        'status' => 'success',
+        'token' => $token,
+        'user' => $user,
+    ]);
+}
     public function googleLogin(Request $request)
     {
         $request->validate([

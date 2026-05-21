@@ -17,7 +17,14 @@ class User extends Authenticatable
         'google_id',
         'role',
         'no_hp',
+        'login_attempts',  
+        'locked_until', 
     ];
+    protected $casts = [
+    'email_verified_at' => 'datetime',
+    'password' => 'hashed',
+    'locked_until' => 'datetime', // Tambahkan baris ini
+];
 
     // Relasi kalau user ini adalah Mitra (1 Mitra punya banyak Lapangan)
     public function lapangans()
