@@ -33,7 +33,7 @@
                 class="w-56 h-auto object-contain mt-10 drop-shadow-xl hover:scale-105 transition-transform duration-300">
 
             <p class="mt-12 text-center text-gray-500 font-medium px-8 text-sm max-w-sm leading-relaxed">
-                Kelola lapangan badminton Anda dan pantau transaksi dengan mudah dalam satu aplikasi digital.
+                Kelola LAPANGAN badminton Anda dan pantau transaksi dengan mudah dalam satu aplikasi digital.
             </p>
 
             <div class="absolute -top-2 -bottom-2 left-full w-24 hidden md:block pointer-events-none -ml-2 text-white">
