@@ -31,6 +31,9 @@ class User extends Authenticatable
     {
         return $this->hasMany(Booking::class, 'penyewa_id');
     }
-
+public function twoFactorAuth()
+{
+    return $this->hasOne(\App\Models\TwoFactorAuthentication::class);
+}
     
 }
