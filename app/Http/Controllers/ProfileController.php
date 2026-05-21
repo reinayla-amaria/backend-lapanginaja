@@ -16,8 +16,22 @@ class ProfileController extends Controller
      */
     public function edit(Request $request): View
     {
+        $user = $request->user();
+        
+        // Cek apakah user sudah mengaktifkan MFA
+        $mfaEnabled = $user->twoFactorAuth()->exists();
+        $qrCode = null;
+
+        // Jika tombol "Aktifkan" diklik, generate QR Code
+        if ($request->has('enable_mfa') && !$mfaEnabled) {
+            // Membuat secret key baru dan QR Code otomatis
+            $qrCode = $user->createTwoFactorAuth()->toQr();
+        }
+
         return view('profile.edit', [
-            'user' => $request->user(),
+            'user' => $user,
+            'mfaEnabled' => $mfaEnabled,
+            'qrCode' => $qrCode, // Kirim QR Code ke tampilan web
         ]);
     }
 
@@ -35,6 +49,15 @@ class ProfileController extends Controller
         $request->user()->save();
 
         return Redirect::route('profile.edit')->with('status', 'profile-updated');
+    }
+
+    /**
+     * Matikan fitur MFA (Optional jika admin mau menonaktifkan)
+     */
+    public function disableMfa(Request $request): RedirectResponse
+    {
+        $request->user()->disableTwoFactorAuth();
+        return Redirect::route('profile.edit')->with('status', 'mfa-disabled');
     }
 
     /**
