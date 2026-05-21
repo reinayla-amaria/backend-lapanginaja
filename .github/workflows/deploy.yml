@@ -112,13 +112,13 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
           port: 8022
-          command_timeout: 30m 
+          command_timeout: 30m
           script: |
             set -e
             set -x
-            
+
             echo "🚀 Mulai deployment..."
-            
+
             # Login ke GHCR
             echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
@@ -128,7 +128,7 @@ jobs:
             # Paksa hapus file compose.yml kosong jika ada
             rm -f compose.yml
 
-            # Matikan container lama dan hapus network bekasnya
+            # Matikan container lama
             docker-compose -f docker-compose.yml down --remove-orphans || true
 
             # Force remove kalau container masih nyangkut
@@ -140,10 +140,18 @@ jobs:
             # Jalankan ulang
             docker-compose -f docker-compose.yml up -d --remove-orphans
 
+            # Tunggu container ready
+            sleep 5
+
+            # Copy .env ke container
+            docker cp /home/${{ secrets.SERVER_USER }}/RPL2B-kelompok-6/.env lapanginaja_app:/var/www/html/.env
+
+            # Cache config
+            docker exec lapanginaja_app php /var/www/html/artisan config:cache
+
             echo "⏳ Menunggu database benar-benar sehat..."
-            # Loop untuk mengecek status 'healthy'
             for i in {1..20}; do
-            STATUS=$(docker inspect --format='{{.State.Health.Status}}' db_lapangan || echo "starting")
+              STATUS=$(docker inspect --format='{{.State.Health.Status}}' db_lapangan || echo "starting")
               if [ "$STATUS" == "healthy" ]; then
                 echo "✅ Database siap!"
                 break
@@ -156,7 +164,6 @@ jobs:
               fi
             done
 
-            # Jalankan migrasi database
             echo "🏃 Jalankan migrasi..."
             docker-compose -f docker-compose.yml exec -T app php artisan migrate --force --no-interaction
 
