@@ -82,7 +82,7 @@
                 {{-- Tiga Kotak Statistik Mitra --}}
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
                     <div class="bg-white p-6 rounded-lg shadow border-l-4 border-blue-500">
-                        <p class="text-gray-500 text-sm font-bold uppercase">Lapangan Aktif</p>
+                        <p class="text-gray-500 text-sm font-bold uppercase">Lapangan Aktiff</p>
                         <p class="text-3xl font-bold text-gray-800 mt-2">{{ $lapangan_aktif }} <span
                                 class="text-sm font-normal text-gray-400">Unit</span></p>
                     </div>
