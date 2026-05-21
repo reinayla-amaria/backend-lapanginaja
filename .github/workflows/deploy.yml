@@ -115,8 +115,7 @@ jobs:
           command_timeout: 30m 
           script: |
             set -e
-            # 👇 INI BIAR LOG DI GITHUB ACTIONS LEBIH DETAIL (NUNJUKIN PERINTAH YANG LAGI JALAN)
-            set -x 
+            set -x
             
             echo "🚀 Mulai deployment..."
             
@@ -130,7 +129,10 @@ jobs:
             rm -f compose.yml
 
             # Matikan container lama dan hapus network bekasnya
-            docker compose -f docker-compose.yml down || true
+            docker-compose -f docker-compose.yml down --remove-orphans || true
+
+            # Force remove kalau container masih nyangkut
+            docker rm -f lapanginaja_app || true
 
             # Pull image terbaru
             docker pull ghcr.io/${{ github.repository }}:latest
