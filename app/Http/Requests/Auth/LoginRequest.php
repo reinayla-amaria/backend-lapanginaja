@@ -37,43 +37,68 @@ class LoginRequest extends FormRequest
      *
      * @throws \Illuminate\Validation\ValidationException
      */
-    public function authenticate(): void
-    {
-        $this->ensureIsNotRateLimited();
+public function authenticate(): void
+{
+    $this->ensureIsNotRateLimited();
 
-        if (! Auth::attempt($this->only('email', 'password'), $this->boolean('remember'))) {
-            RateLimiter::hit($this->throttleKey());
+    if (! Auth::attempt($this->only('email', 'password'), $this->boolean('remember'))) {
+        RateLimiter::hit($this->throttleKey());
 
-            throw ValidationException::withMessages([
-                'email' => trans('auth.failed'),
-            ]);
+        $user = \App\Models\User::where('email', $this->input('email'))->first();
+        if ($user) {
+            $user->increment('login_attempts');
+            
+            // Logika blokir 10 menit setelah 5 kali gagal
+            if ($user->login_attempts >= 5) {
+                $user->update(['locked_until' => now()->addMinutes(10)]);
+            }
         }
 
-        RateLimiter::clear($this->throttleKey());
+        throw ValidationException::withMessages([
+            'email' => trans('auth.failed'),
+        ]);
     }
 
+    // Reset jika berhasil
+    $user = \App\Models\User::where('email', $this->input('email'))->first();
+    if ($user) {
+        $user->update(['login_attempts' => 0, 'locked_until' => null]);
+    }
+
+    RateLimiter::clear($this->throttleKey());
+}
     /**
      * Ensure the login request is not rate limited.
      *
      * @throws \Illuminate\Validation\ValidationException
      */
-    public function ensureIsNotRateLimited(): void
-    {
-        if (! RateLimiter::tooManyAttempts($this->throttleKey(), 5)) {
-            return;
-        }
+public function ensureIsNotRateLimited(): void
+{
+    $user = \App\Models\User::where('email', $this->input('email'))->first();
 
-        event(new Lockout($this));
-
-        $seconds = RateLimiter::availableIn($this->throttleKey());
-
+    // Cek apakah user sedang diblokir
+    if ($user && $user->locked_until && now()->lessThan($user->locked_until)) {
+        $minutes = now()->diffInMinutes($user->locked_until) + 1;
+        
         throw ValidationException::withMessages([
-            'email' => trans('auth.throttle', [
-                'seconds' => $seconds,
-                'minutes' => ceil($seconds / 60),
-            ]),
+            'email' => "Terlalu banyak percobaan login. Silakan coba lagi dalam {$minutes} menit.",
         ]);
     }
+    // Tetap jalankan throttle bawaan Laravel
+   if (! RateLimiter::tooManyAttempts($this->throttleKey(), 5)) {
+        return;
+    }
+
+    event(new Lockout($this));
+
+    $seconds = RateLimiter::availableIn($this->throttleKey());
+    throw ValidationException::withMessages([
+        'email' => trans('auth.throttle', [
+            'seconds' => $seconds,
+            'minutes' => ceil($seconds / 60),
+        ]),
+    ]);
+}
 
     /**
      * Get the rate limiting throttle key for the request.
