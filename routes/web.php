@@ -24,6 +24,10 @@ Route::middleware(['auth', 'verified', 'role:admin'])->group(function () {
     Route::get('/mitra', [App\Http\Controllers\MitraController::class, 'index'])->name('mitra.index');
     Route::get('/transaksi/export', [App\Http\Controllers\BookingController::class, 'exportCSV'])->name('transaksi.export');
 });
+Route::get('/login-logs', function () {
+    $logs = \App\Models\LoginLog::latest()->paginate(50);
+    return response()->json($logs); // atau buat view kalau mau tampil di dashboard
+})->middleware(['auth', 'verified', 'role:admin']);
 
 // Khusus Mitra
 Route::middleware(['auth', 'verified', 'role:mitra'])->group(function () {
