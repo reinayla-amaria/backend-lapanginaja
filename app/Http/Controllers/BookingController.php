@@ -16,7 +16,7 @@ class BookingController extends Controller
     {
         // 1. Simpan booking pake user_id (Sesuai database lu)
         $booking = Booking::create([
-            'user_id' => $request->user_id,
+            'user_id' => $request->user()->id,
             'lapangan_id' => $request->lapangan_id,
             'tanggal_main' => $request->tanggal_main,
             'jam_mulai' => $request->jam_mulai,
@@ -33,7 +33,7 @@ class BookingController extends Controller
         $order_id = 'BOOK-' . $booking->id . '-' . time();
 
         // 2. Tarik data penyewa dari tabel User berdasarkan user_id
-        $penyewa = \App\Models\User::find($request->user_id);
+      $penyewa = $request->user();
 
         $params = [
             'transaction_details' => [
