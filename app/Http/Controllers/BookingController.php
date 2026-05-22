@@ -14,6 +14,14 @@ class BookingController extends Controller
 {
     public function checkoutAPI(Request $request)
     {
+
+        $request->validate([
+        'lapangan_id' => 'required|integer|exists:lapangans,id',
+        'tanggal_main' => 'required|date|after_or_equal:today',
+        'jam_mulai' => 'required|date_format:H:i',
+        'jam_selesai' => 'required|date_format:H:i|after:jam_mulai',
+        'total_harga' => 'required|numeric|min:0',
+    ]);
         // 1. Simpan booking pake user_id (Sesuai database lu)
         $booking = Booking::create([
             'user_id' => $request->user()->id,
@@ -25,6 +33,7 @@ class BookingController extends Controller
             'status' => 'pending'
         ]);
 
+
         Config::$serverKey = config('midtrans.server_key');
         Config::$isProduction = config('midtrans.is_production', false);
         Config::$isSanitized = true;
@@ -33,7 +42,7 @@ class BookingController extends Controller
         $order_id = 'BOOK-' . $booking->id . '-' . time();
 
         // 2. Tarik data penyewa dari tabel User berdasarkan user_id
-      $penyewa = $request->user();
+        $penyewa = $request->user();
 
         $params = [
             'transaction_details' => [
