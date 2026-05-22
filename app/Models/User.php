@@ -23,10 +23,11 @@ class User extends Authenticatable
     protected $casts = [
     'email_verified_at' => 'datetime',
     'password' => 'hashed',
-    'locked_until' => 'datetime', // Tambahkan baris ini
+    'locked_until' => 'datetime', 
+    'no_hp' => 'encrypted',   
+    'name' => 'encrypted',
 ];
 
-    // Relasi kalau user ini adalah Mitra (1 Mitra punya banyak Lapangan)
     public function lapangans()
     {
         // Harus sebutin 'mitra_id' karena kita gak pake default 'user_id'
