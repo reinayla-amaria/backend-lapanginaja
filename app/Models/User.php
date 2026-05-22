@@ -17,6 +17,8 @@ class User extends Authenticatable
         'google_id',
         'role',
         'no_hp',
+        'login_attempts',  
+        'locked_until', 
     ];
 
     // Relasi kalau user ini adalah Mitra (1 Mitra punya banyak Lapangan)

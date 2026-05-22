@@ -15,3 +15,6 @@ Route::post('/midtrans-callback', [BookingController::class, 'callbackAPI']);
 
 // 3. Rute Auth Google
 Route::post('/register_google', [AuthController::class, 'googleLogin']);
+
+Route::post('/login', [AuthController::class, 'login']);
+Route::post('/register', [AuthController::class, 'register']);
