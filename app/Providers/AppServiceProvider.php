@@ -3,26 +3,27 @@
 namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
-use Illuminate\Support\Facades\URL; // <-- Tambahkan baris ini
+use Illuminate\Support\Facades\URL;
+use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Http\Request;
 
 class AppServiceProvider extends ServiceProvider
 {
-    /**
-     * Register any application services.
-     */
     public function register(): void
     {
         //
     }
 
-    /**
-     * Bootstrap any application services.
-     */
     public function boot(): void
     {
-        // Tambahkan baris di bawah ini agar asset dipaksa ke HTTPS
         if (config('app.env') !== 'local') {
             URL::forceScheme('https');
         }
+
+        // Rate limiting 100 request/menit per IP
+        RateLimiter::for('public', function (Request $request) {
+            return Limit::perMinute(100)->by($request->ip());
+        });
     }
 }
