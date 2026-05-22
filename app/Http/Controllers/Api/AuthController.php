@@ -24,9 +24,7 @@ class AuthController extends Controller
             'password' => Hash::make($request->password),
         ]);
 
-        // $user->sendEmailVerificationNotification(); // Dimatikan sementara
-
-        // Langsung kasih token biar Flutter bisa auto-login
+    
         $token = $user->createToken('auth_token')->plainTextToken;
 
         return response()->json([
@@ -37,7 +35,7 @@ class AuthController extends Controller
         ]);
     }
 
-    public function login(Request $request)
+ public function login(Request $request)
 {
     $request->validate([
         'email' => 'required|email',
@@ -55,42 +53,50 @@ class AuthController extends Controller
         ], 429);
     }
 
-    // Cek kredensial
+    // Cek kredensial gagal
     if (!Auth::attempt($request->only('email', 'password'))) {
         if ($user) {
             $user->login_attempts += 1;
 
             if ($user->login_attempts >= 5) {
-                $user->locked_until = now()->addMinutes(10);
+                $user->locked_until = now()->addMinutes(15);
                 $user->login_attempts = 0;
                 $user->save();
-
-                return response()->json([
-                    'status' => 'error',
-                    'message' => 'Akun terkunci selama 10 menit karena 5 kali percobaan login gagal.',
-                ], 429);
+            } else {
+                $user->save();
             }
-
-            $sisaCobaan = 5 - $user->login_attempts;
-            $user->save();
-
-            return response()->json([
-                'status' => 'error',
-                'message' => "Email atau password salah. Sisa percobaan: {$sisaCobaan}.",
-            ], 401);
         }
 
+        // Log login gagal
+        \App\Models\LoginLog::create([
+            'user_id' => $user ? $user->id : null,
+            'email' => $request->email,
+            'status' => 'failed',
+            'ip_address' => $request->ip(),
+            'user_agent' => $request->userAgent(),
+        ]);
+
+        $sisaCobaan = $user ? (5 - $user->login_attempts) : null;
         return response()->json([
             'status' => 'error',
-            'message' => 'Email atau password salah.',
+            'message' => $sisaCobaan ? "Email atau password salah. Sisa percobaan: {$sisaCobaan}." : 'Email atau password salah.',
         ], 401);
     }
 
-    // Login berhasil — reset counter
+    // Login berhasil
     $user = Auth::user();
     $user->login_attempts = 0;
     $user->locked_until = null;
     $user->save();
+
+    // Log login berhasil
+    \App\Models\LoginLog::create([
+        'user_id' => $user->id,
+        'email' => $request->email,
+        'status' => 'success',
+        'ip_address' => $request->ip(),
+        'user_agent' => $request->userAgent(),
+    ]);
 
     $token = $user->createToken('auth_token')->plainTextToken;
 
