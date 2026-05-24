@@ -263,4 +263,28 @@ class BookingController extends Controller
 
         return back()->with('success', 'Status jadwal berhasil diperbarui!');
     }
+    public function myBookings(Request $request)
+{
+    $bookings = Booking::with('lapangan')
+        ->where('user_id', $request->user()->id)
+        ->orderBy('created_at', 'desc')
+        ->get()
+        ->map(function ($booking) {
+            return [
+                'id' => $booking->id,
+                'lapangan_id' => $booking->lapangan_id,
+                'nama_lapangan' => $booking->lapangan->nama_lapangan ?? 'Lapangan',
+                'tanggal_main' => $booking->tanggal_main,
+                'jam_mulai' => $booking->jam_mulai,
+                'jam_selesai' => $booking->jam_selesai,
+                'total_harga' => $booking->total_harga,
+                'status' => $booking->status,
+            ];
+        });
+
+    return response()->json([
+        'status' => 'success',
+        'data' => $bookings,
+    ]);
+}
 }
