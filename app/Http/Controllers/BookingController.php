@@ -9,6 +9,7 @@ use App\Models\Booking;
 use App\Models\Payment;
 use Midtrans\Config;
 use Midtrans\Snap;
+use App\Http\Controllers\Api\FcmController;
 
 class BookingController extends Controller
 {
@@ -74,33 +75,64 @@ class BookingController extends Controller
         ]);
     }
 
-    public function callbackAPI(Request $request)
-    {
-        $serverKey = config('midtrans.server_key');
-        $hashed = hash("sha512", $request->order_id . $request->status_code . $request->gross_amount . $serverKey);
 
-        if ($hashed == $request->signature_key) {
+public function callbackAPI(Request $request)
+{
+    $serverKey = config('midtrans.server_key');
+    $hashed = hash(
+        "sha512",
+        $request->order_id . $request->status_code . $request->gross_amount . $serverKey
+    );
 
-            $payment = Payment::where('transaction_id', $request->order_id)->first();
+    if ($hashed == $request->signature_key) {
 
-            if ($payment) {
-                if ($request->transaction_status == 'capture' || $request->transaction_status == 'settlement') {
+        $payment = Payment::where('transaction_id', $request->order_id)->first();
 
-                    $payment->update(['status' => 'sukses']);
-                    $payment->booking->update(['status' => 'dibayar']);
+        if ($payment) {
+            if (
+                $request->transaction_status == 'capture' ||
+                $request->transaction_status == 'settlement'
+            ) {
+                $payment->update([
+                    'status'             => 'sukses',
+                    'metode_pembayaran'  => $request->payment_type ?? 'Midtrans',
+                ]);
+                $payment->booking->update(['status' => 'dibayar']);
 
-                } elseif ($request->transaction_status == 'cancel' || $request->transaction_status == 'deny' || $request->transaction_status == 'expire') {
+                // --- KIRIM FCM NOTIFICATION ---
+                $booking  = $payment->booking->load(['lapangan', 'user']);
+                $fcmToken = $booking->user->fcm_token ?? null;
 
-                    $payment->update(['status' => 'gagal']);
-                    $payment->booking->update(['status' => 'batal']);
-
+                if ($fcmToken) {
+                    FcmController::sendBookingNotification($fcmToken, [
+                        'booking_id'        => (string) $booking->id,
+                        'nama_lapangan'     => ($booking->lapangan->mitra->name ?? '') .
+                                              ' - ' . ($booking->lapangan->nama_lapangan ?? ''),
+                        'lokasi'            => $booking->lapangan->lokasi ?? '-',
+                        'tanggal_main'      => $booking->tanggal_main,
+                        'jam_mulai'         => \Carbon\Carbon::parse($booking->jam_mulai)->format('H:i'),
+                        'jam_selesai'       => \Carbon\Carbon::parse($booking->jam_selesai)->format('H:i'),
+                        'total_harga'       => (string) $booking->total_harga,
+                        'user_name'         => $booking->user->name ?? 'Penyewa',
+                        'metode_pembayaran' => $request->payment_type ?? 'Midtrans',
+                        'transaction_id'    => $request->order_id ?? '-',
+                    ]);
                 }
+                // ------------------------------
+
+            } elseif (
+                $request->transaction_status == 'cancel' ||
+                $request->transaction_status == 'deny' ||
+                $request->transaction_status == 'expire'
+            ) {
+                $payment->update(['status' => 'gagal']);
+                $payment->booking->update(['status' => 'batal']);
             }
         }
-
-        return response()->json(['message' => 'Laporan diterima!']);
     }
 
+    return response()->json(['message' => 'Laporan diterima!']);
+}
     public function jadwal()
     {
         $mitraId = Auth::id();
@@ -288,6 +320,52 @@ class BookingController extends Controller
     return response()->json([
         'status' => 'success',
         'data' => $bookings,
+    ]);
+    
+}
+public function bookingDetail(Request $request, $id)
+{
+    $booking = Booking::with(['lapangan', 'user'])
+        ->where('id', $id)
+        ->where('user_id', $request->user()->id) // Pastikan hanya punya sendiri
+        ->first();
+ 
+    if (!$booking) {
+        return response()->json([
+            'status' => 'error',
+            'pesan' => 'Booking tidak ditemukan'
+        ], 404);
+    }
+ 
+    $payment = Payment::where('booking_id', $booking->id)
+        ->latest()
+        ->first();
+ 
+    return response()->json([
+        'status' => 'success',
+        'data' => [
+            'booking' => [
+                'id'           => (string) $booking->id,
+                'tanggal_main' => $booking->tanggal_main,
+                'jam_mulai'    => \Carbon\Carbon::parse($booking->jam_mulai)->format('H:i'),
+                'jam_selesai'  => \Carbon\Carbon::parse($booking->jam_selesai)->format('H:i'),
+                'total_harga'  => (string) $booking->total_harga,
+                'status'       => $booking->status,
+            ],
+            'lapangan' => [
+                'nama_lapangan' => ($booking->lapangan->mitra->name ?? '') . ' - ' . ($booking->lapangan->nama_lapangan ?? ''),
+                'lokasi'        => $booking->lapangan->lokasi ?? '-',
+            ],
+            'user' => [
+                'name' => $booking->user->name ?? 'Penyewa',
+            ],
+            'payment' => [
+                'transaction_id'     => $payment->transaction_id ?? '-',
+                'metode_pembayaran'  => $payment->metode_pembayaran ?? 'Midtrans',
+                'jumlah_bayar'       => (string) ($payment->jumlah_bayar ?? $booking->total_harga),
+                'status'             => $payment->status ?? 'pending',
+            ],
+        ]
     ]);
 }
 };
