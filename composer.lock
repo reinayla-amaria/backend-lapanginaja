@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "d298874149623689fdf37ed5d1b56982",
+    "content-hash": "e05b0a90e9d96a94c88c909f81712155",
     "packages": [
         {
             "name": "beste/clock",
@@ -2103,16 +2103,16 @@
         },
         {
             "name": "kreait/laravel-firebase",
-            "version": "6.2.0",
+            "version": "6.1.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/beste/laravel-firebase.git",
-                "reference": "1928f8dbf7882f24f9d33eaf5d4bee24b2663981"
+                "reference": "9cbb24f17a42dbcb447468f0565e65d113e535aa"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/beste/laravel-firebase/zipball/1928f8dbf7882f24f9d33eaf5d4bee24b2663981",
-                "reference": "1928f8dbf7882f24f9d33eaf5d4bee24b2663981",
+                "url": "https://api.github.com/repos/beste/laravel-firebase/zipball/9cbb24f17a42dbcb447468f0565e65d113e535aa",
+                "reference": "9cbb24f17a42dbcb447468f0565e65d113e535aa",
                 "shasum": ""
             },
             "require": {
@@ -2120,7 +2120,7 @@
                 "illuminate/notifications": "^11.0 || ^12.0",
                 "illuminate/support": "^11.0 || ^12.0",
                 "kreait/firebase-php": "^7.19",
-                "php": "~8.2.0 || ~8.3.0 || ~8.4.0 || ~8.5.0",
+                "php": "~8.2.0 || ~8.3.0 || ~8.4.0",
                 "symfony/cache": "^6.1.2 || ^7.0.3"
             },
             "require-dev": {
@@ -2166,7 +2166,7 @@
             ],
             "support": {
                 "issues": "https://github.com/beste/laravel-firebase/issues",
-                "source": "https://github.com/beste/laravel-firebase/tree/6.2.0"
+                "source": "https://github.com/beste/laravel-firebase/tree/6.1.0"
             },
             "funding": [
                 {
@@ -2178,7 +2178,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2025-11-28T14:26:28+00:00"
+            "time": "2025-06-14T13:25:32+00:00"
         },
         {
             "name": "laravel/framework",
