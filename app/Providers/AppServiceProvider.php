@@ -14,14 +14,12 @@ class AppServiceProvider extends ServiceProvider
     {
         //
     }
-
     public function boot(): void
     {
         if (config('app.env') !== 'local') {
             URL::forceScheme('https');
         }
 
-        // Rate limiting 100 request/menit per IP
         RateLimiter::for('public', function (Request $request) {
             return Limit::perMinute(100)->by($request->ip());
         });
