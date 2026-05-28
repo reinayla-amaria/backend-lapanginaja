@@ -64,6 +64,7 @@ class BookingController extends Controller
             'booking_id' => $booking->id,
             'transaction_id' => $order_id,
             'snap_token' => $snapToken,
+            'booking_id' => $booking->id,
             'jumlah_bayar' => $booking->total_harga,
             'status' => 'pending'
         ]);
