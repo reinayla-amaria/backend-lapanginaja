@@ -335,15 +335,8 @@ public function bookingDetail(Request $request, $id)
             'message' => 'Tidak ditemukan'
         ], 404);
     }
-   $payment = Payment::where('booking_id', $id)->first();
 
-if (!$payment) {
-    $payment = (object) [
-        'transaction_id' => '-',
-        'status' => '-',
-        'metode_pembayaran' => '-'
-    ];
-}
+    $payment = Payment::where('booking_id', $id)->first();
 
     return response()->json([
         'status' => 'success',
