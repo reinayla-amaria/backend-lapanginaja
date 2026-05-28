@@ -326,20 +326,24 @@ public function callbackAPI(Request $request)
 }
 public function bookingDetail(Request $request, $id)
 {
-    $booking = Booking::with(['lapangan', 'lapangan.mitra'])->find($id);
+    $booking = Booking::with(['user', 'lapangan', 'lapangan.mitra'])
+        ->find($id);
 
     if (!$booking || $booking->user_id !== $request->user()->id) {
-        return response()->json(['status' => 'error', 'message' => 'Tidak ditemukan'], 404);
+        return response()->json([
+            'status' => 'error',
+            'message' => 'Tidak ditemukan'
+        ], 404);
     }
 
-    $payment = \App\Models\Payment::where('booking_id', $id)->latest()->first();
+    $payment = Payment::where('booking_id', $id)->first();
 
     return response()->json([
         'status' => 'success',
         'data' => [
             'booking' => $booking,
             'lapangan' => $booking->lapangan,
-            'user' => $request->user(),
+            'user' => $booking->user,   // 🔥 INI FIX UTAMA
             'payment' => $payment,
         ]
     ]);
