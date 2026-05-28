@@ -114,7 +114,7 @@ public function callbackAPI(Request $request)
                         'jam_mulai'         => \Carbon\Carbon::parse($booking->jam_mulai)->format('H:i'),
                         'jam_selesai'       => \Carbon\Carbon::parse($booking->jam_selesai)->format('H:i'),
                         'total_harga'       => (string) $booking->total_harga,
-                        'name'               => $booking->user->name ?? 'Penyewa',
+                        'user_name' => $booking->user->name ?? 'Penyewa',
                         'metode_pembayaran' => $request->payment_type ?? 'Midtrans',
                         'transaction_id'    => $request->order_id ?? '-',
                     ]);
