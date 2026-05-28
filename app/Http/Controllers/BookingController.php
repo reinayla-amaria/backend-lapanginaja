@@ -60,20 +60,20 @@ class BookingController extends Controller
 
         $snapToken = Snap::getSnapToken($params);
 
-        Payment::create([
-            'booking_id' => $booking->id,
-            'transaction_id' => $order_id,
-            'snap_token' => $snapToken,
-            'booking_id' => $booking->id,
-            'jumlah_bayar' => $booking->total_harga,
-            'status' => 'pending'
-        ]);
+    Payment::create([
+    'booking_id' => $booking->id,
+    'transaction_id' => $order_id,
+    'snap_token' => $snapToken,
+    'jumlah_bayar' => $booking->total_harga,
+    'status' => 'pending'
+]);
 
-        return response()->json([
-            'status' => 'sukses',
-            'pesan' => 'Booking berhasil dibuat!',
-            'snap_token' => $snapToken
-        ]);
+return response()->json([
+    'status' => 'sukses',
+    'pesan' => 'Booking berhasil dibuat!',
+    'snap_token' => $snapToken,
+    'booking_id' => $booking->id, // tambah ini
+]);
     }
 
 
