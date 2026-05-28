@@ -113,7 +113,7 @@ public function callbackAPI(Request $request)
                         'jam_mulai'         => \Carbon\Carbon::parse($booking->jam_mulai)->format('H:i'),
                         'jam_selesai'       => \Carbon\Carbon::parse($booking->jam_selesai)->format('H:i'),
                         'total_harga'       => (string) $booking->total_harga,
-                        'name'              => $booking->user->name ?? 'Penyewa',
+                        'name'               => $booking->user->name ?? 'Penyewa',
                         'metode_pembayaran' => $request->payment_type ?? 'Midtrans',
                         'transaction_id'    => $request->order_id ?? '-',
                     ]);
@@ -325,47 +325,22 @@ public function callbackAPI(Request $request)
 }
 public function bookingDetail(Request $request, $id)
 {
-    $booking = Booking::with(['lapangan', 'user'])
-        ->where('id', $id)
-        ->where('user_id', $request->user()->id) // Pastikan hanya punya sendiri
-        ->first();
- 
-    if (!$booking) {
-        return response()->json([
-            'status' => 'error',
-            'pesan' => 'Booking tidak ditemukan'
-        ], 404);
+    $booking = Booking::with(['lapangan', 'lapangan.mitra'])->find($id);
+
+    if (!$booking || $booking->user_id !== $request->user()->id) {
+        return response()->json(['status' => 'error', 'message' => 'Tidak ditemukan'], 404);
     }
- 
-    $payment = Payment::where('booking_id', $booking->id)
-        ->latest()
-        ->first();
- 
+
+    $payment = \App\Models\Payment::where('booking_id', $id)->latest()->first();
+
     return response()->json([
         'status' => 'success',
         'data' => [
-            'booking' => [
-                'id'           => (string) $booking->id,
-                'tanggal_main' => $booking->tanggal_main,
-                'jam_mulai'    => \Carbon\Carbon::parse($booking->jam_mulai)->format('H:i'),
-                'jam_selesai'  => \Carbon\Carbon::parse($booking->jam_selesai)->format('H:i'),
-                'total_harga'  => (string) $booking->total_harga,
-                'status'       => $booking->status,
-            ],
-            'lapangan' => [
-                'nama_lapangan' => ($booking->lapangan->mitra->name ?? '') . ' - ' . ($booking->lapangan->nama_lapangan ?? ''),
-                'lokasi'        => $booking->lapangan->lokasi ?? '-',
-            ],
-            'user' => [
-                'name' => $booking->user->name ?? 'Penyewa',
-            ],
-            'payment' => [
-                'transaction_id'     => $payment->transaction_id ?? '-',
-                'metode_pembayaran'  => $payment->metode_pembayaran ?? 'Midtrans',
-                'jumlah_bayar'       => (string) ($payment->jumlah_bayar ?? $booking->total_harga),
-                'status'             => $payment->status ?? 'pending',
-            ],
+            'booking' => $booking,
+            'lapangan' => $booking->lapangan,
+            'user' => $request->user(),
+            'payment' => $payment,
         ]
     ]);
 }
-};
+}
