@@ -19,6 +19,7 @@ class User extends Authenticatable
         'no_hp',
         'login_attempts',  
         'locked_until', 
+        'username',
     ];
     protected $casts = [
     'email_verified_at' => 'datetime',
