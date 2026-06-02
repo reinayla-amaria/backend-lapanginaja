@@ -278,13 +278,13 @@ public function callbackAPI(Request $request)
                 $booking->update(['status' => 'maintenance']);
             } else {
                 // Bikin booking 'palsu' khusus buat ngeblokir lapangan pake user_id
-                Booking::create([
-                    'lapangan_id' => $request->lapangan_id,
-                    'user_id' => Auth::id(), // SUDAH DIGANTI JADI user_id
-                    'jam_mulai' => $tanggalMulai,
-                    'jam_selesai' => $tanggalSelesai,
-                    'status' => 'maintenance',
-                    'total_harga' => 0
+               Booking::create([
+                'lapangan_id' => $request->lapangan_id,
+                'user_id' => Auth::id(),
+                'jam_mulai' => $tanggalMulai,
+                'jam_selesai' => $tanggalSelesai,
+                'status' => 'maintenance',
+                'total_harga' => 0
                 ]);
             }
         } else {
@@ -307,15 +307,17 @@ public function callbackAPI(Request $request)
             $namaLapangan = $booking->lapangan->nama_lapangan ?? 'Lapangan';
             
             return [
-                'id' => $booking->id,
-                'lapangan_id' => $booking->lapangan_id,
-                'nama_lapangan' => $namaVenue . ' - ' . $namaLapangan,
-                'tanggal_main' => $booking->tanggal_main,
-                'jam_mulai' => $booking->jam_mulai,
-                'jam_selesai' => $booking->jam_selesai,
-                'total_harga' => $booking->total_harga,
-                'status' => $booking->status,
-            ];
+            'id' => $booking->id,
+            'lapangan_id' => $booking->lapangan_id,
+            'mitra_id' => $booking->lapangan->mitra_id ?? '',
+            'mitra_name' => $booking->lapangan->mitra->name ?? '',
+            'nama_lapangan' => $namaVenue . ' - ' . $namaLapangan,
+            'tanggal_main' => $booking->tanggal_main,
+            'jam_mulai' => $booking->jam_mulai,
+            'jam_selesai' => $booking->jam_selesai,
+            'total_harga' => $booking->total_harga,
+            'status' => $booking->status,
+];
         });
 
     return response()->json([
