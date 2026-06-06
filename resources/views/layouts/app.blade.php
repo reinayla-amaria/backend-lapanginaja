@@ -49,13 +49,19 @@
                     </a>
 
                     <a href="{{ route('mitra.jadwal') }}"
-                        class="flex items-center gap-3 px-4 py-3 rounded-lg text-lg transition-colors hover:bg-blue-700">
+                        class="flex items-center gap-3 px-4 py-3 rounded-lg text-lg transition-colors {{ request()->routeIs('mitra.jadwal') ? 'bg-orange-500 font-bold' : 'hover:bg-blue-700' }}">
                         Jadwal Lapangan
                     </a>
 
                     <a href="{{ route('transaksi.index') }}"
-                        class="flex items-center gap-3 px-4 py-3 rounded-lg text-lg transition-colors hover:bg-blue-700">
+                        class="flex items-center gap-3 px-4 py-3 rounded-lg text-lg transition-colors {{ request()->routeIs('transaksi.*') ? 'bg-orange-500 font-bold' : 'hover:bg-blue-700' }}">
                         Verifikasi Pesanan
+                    </a>
+
+                    {{-- MENU CHAT — di dalam block mitra --}}
+                    <a href="{{ route('mitra.chat') }}"
+                        class="flex items-center gap-3 px-4 py-3 rounded-lg text-lg transition-colors {{ request()->routeIs('mitra.chat') ? 'bg-orange-500 font-bold' : 'hover:bg-blue-700' }}">
+                        💬 Pesan
                     </a>
                 @endif
             </nav>

@@ -24,9 +24,10 @@ Route::middleware(['auth', 'verified', 'role:admin'])->group(function () {
     Route::get('/mitra', [App\Http\Controllers\MitraController::class, 'index'])->name('mitra.index');
     Route::get('/transaksi/export', [App\Http\Controllers\BookingController::class, 'exportCSV'])->name('transaksi.export');
 });
+
 Route::get('/login-logs', function () {
     $logs = \App\Models\LoginLog::latest()->paginate(50);
-    return response()->json($logs); // atau buat view kalau mau tampil di dashboard
+    return response()->json($logs);
 })->middleware(['auth', 'verified', 'role:admin']);
 
 // Khusus Mitra
@@ -40,6 +41,9 @@ Route::middleware(['auth', 'verified', 'role:mitra'])->group(function () {
     Route::get('/transaksi', [App\Http\Controllers\BookingController::class, 'indexMitra'])->name('transaksi.index');
     Route::get('/jadwal-lapangan', [App\Http\Controllers\BookingController::class, 'jadwal'])->name('mitra.jadwal');
     Route::post('/jadwal-lapangan/update', [App\Http\Controllers\BookingController::class, 'updateJadwal'])->name('mitra.jadwal.update');
+
+    // Chat mitra
+    Route::get('/mitra/chat', [App\Http\Controllers\ChatController::class, 'index'])->name('mitra.chat');
 });
 
 // Admin & Mitra (dashboard bersama)
