@@ -227,3 +227,4 @@
             if (e.key === 'Enter') sendMessage();
         });
     </script>
+</x-app-layout>
