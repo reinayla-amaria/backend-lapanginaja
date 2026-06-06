@@ -61,7 +61,7 @@
                     {{-- MENU CHAT — di dalam block mitra --}}
                     <a href="{{ route('mitra.chat') }}"
                         class="flex items-center gap-3 px-4 py-3 rounded-lg text-lg transition-colors {{ request()->routeIs('mitra.chat') ? 'bg-orange-500 font-bold' : 'hover:bg-blue-700' }}">
-                        💬 Pesan
+                        Pesan
                     </a>
                 @endif
             </nav>
