@@ -134,11 +134,6 @@
                 item.onclick = () => openChat(userId, chatId, item);
                 item.innerHTML = `
                     <div class="flex items-center gap-3">
-                        <div class="w-9 h-9 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                            </svg>
-                        </div>
                         <div class="flex-1 min-w-0">
                             <p class="font-bold text-gray-800 text-sm">Penyewa #${userId}</p>
                             <p class="text-xs text-gray-400 truncate">${lastMsg}</p>
