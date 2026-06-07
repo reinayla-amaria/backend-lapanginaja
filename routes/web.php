@@ -21,7 +21,12 @@ Route::get('/jalanin-migrasi', function () {
 
 // Khusus Admin
 Route::middleware(['auth', 'verified', 'role:admin'])->group(function () {
-    Route::get('/mitra', [App\Http\Controllers\MitraController::class, 'index'])->name('mitra.index');
+    // PERBAIKAN 1: Mengubah URL menjadi /kelola-mitra dan pakai resource biar mencakup GET, POST, DELETE
+    // name('mitra') dipakai biar route('mitra.index') di file test kamu tetap nyambung.
+    Route::resource('kelola-mitra', App\Http\Controllers\MitraController::class)->names('mitra');
+
+    // PERBAIKAN 2: Admin sekarang bisa akses halaman lihat transaksi (biar gak error 302 lagi)
+    Route::get('/transaksi', [App\Http\Controllers\BookingController::class, 'index'])->name('admin.transaksi.index');
     Route::get('/transaksi/export', [App\Http\Controllers\BookingController::class, 'exportCSV'])->name('transaksi.export');
 });
 
@@ -38,6 +43,7 @@ Route::middleware(['auth', 'verified', 'role:mitra'])->group(function () {
     Route::get('/lapangan/{lapangan}/edit', [LapanganController::class, 'edit'])->name('lapangan.edit');
     Route::put('/lapangan/{lapangan}', [LapanganController::class, 'update'])->name('lapangan.update');
     Route::delete('/lapangan/{lapangan}', [LapanganController::class, 'destroy'])->name('lapangan.destroy');
+
     Route::get('/transaksi', [App\Http\Controllers\BookingController::class, 'indexMitra'])->name('transaksi.index');
     Route::get('/jadwal-lapangan', [App\Http\Controllers\BookingController::class, 'jadwal'])->name('mitra.jadwal');
     Route::post('/jadwal-lapangan/update', [App\Http\Controllers\BookingController::class, 'updateJadwal'])->name('mitra.jadwal.update');
