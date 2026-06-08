@@ -84,9 +84,6 @@
                     @empty
                     <tr>
                         <td colspan="7" class="py-16 text-gray-500 font-medium">Belum ada pesanan yang masuk nih bang.</td>
-                        @empty
-                    <tr>
-                        <td colspan="7" class="py-16 text-gray-500 font-medium">Belum ada pesanan yang masuk nih bang.</td>
                     </tr>
                     @endforelse
                     
