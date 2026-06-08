@@ -34,13 +34,15 @@ class GorIndramayuSeeder extends Seeder
         ];
 
         foreach ($daftarGor as $index => $gor) {
-            $mitra = User::create([
-                'name' => $gor['nama'],
-                'email' => 'mitra' . ($index + 1) . '@lapanginaja.com',
-                'password' => Hash::make('password'), // Password default buat semua mitra: password
-                'role' => 'mitra',
-            ]);
-
+            
+$mitra = User::updateOrCreate(
+    ['email' => 'mitra' . ($index + 1) . '@lapanginaja.com'],
+    [
+        'name' => substr($gor['nama'], 0, 255),
+        'password' => Hash::make('password'),
+        'role' => 'mitra',
+    ]
+);
             // 2. Looping Bikin Lapangan Berdasarkan "Jumlah Lapangan"
             for ($i = 1; $i <= $gor['jumlah']; $i++) {
                 Lapangan::create([
