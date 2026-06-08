@@ -1,7 +1,8 @@
 <?php
 
-it('returns a successful response', function () {
+test('it returns a successful response', function () {
     $response = $this->get('/');
 
-    $response->assertStatus(200);
+    // Ubah assertStatus(200) jadi assertRedirect
+    $response->assertRedirect('/login');
 });
