@@ -21,9 +21,9 @@
         class="bg-white rounded-[40px] shadow-2xl flex flex-col md:flex-row-reverse w-full max-w-6xl overflow-hidden min-h-[700px] relative">
 
         <div class="md:w-1/2 bg-white flex flex-col items-center justify-center p-12 relative z-10">
-            <div class="absolute top-8 right-8 text-right">
-                <h2 class="text-2xl font-bold text-blue-950 tracking-wider leading-none">LapanginAja</h2>
-                <p class="text-xs text-orange-500 font-bold tracking-widest mt-1 uppercase">Mitra Partner</p>
+            <div class="absolute top-8 right-8 flex flex-col items-end">
+                <img src="{{ asset('images/logo.png') }}" alt="Lapangin.Aja Logo" class="h-10 w-auto object-contain mb-1">
+                <p class="text-xs text-orange-500 font-bold tracking-widest uppercase">Mitra Partner</p>
             </div>
 
             <img src="https://img.icons8.com/color/256/badminton-court.png" alt="Badminton Arena"
