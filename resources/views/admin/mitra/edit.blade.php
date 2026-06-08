@@ -1,7 +1,7 @@
 <x-app-layout>
     <div class="py-8 px-6 lg:px-8 max-w-3xl mx-auto">
         <div class="mb-8">
-            <h2 class="text-3xl font-extrabold text-gray-800">Edit Data Mitra</h2>
+            <h2 class="text-3xl font-extrabold text-gray-800">Edit Data Mitraa</h2>
             <p class="text-base text-gray-500 mt-2">Update informasi akun pemilik GOR.</p>
         </div>
 
