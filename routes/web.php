@@ -10,7 +10,7 @@ use App\Http\Controllers\LapanganController;
 use App\Http\Controllers\BookingController;
 use App\Http\Controllers\ChatController;
 use App\Http\Controllers\MitraController;
-
+use App\Http\Controllers\DashboardController;
 use App\Models\User;
 use App\Models\Lapangan;
 use App\Models\Booking;
@@ -61,24 +61,10 @@ Route::middleware(['auth', 'verified', 'role:mitra'])->group(function () {
 
 //dashboard
 Route::middleware(['auth', 'verified'])->group(function () {
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
-    Route::get('/dashboard', function () {
 
-        $user = Auth::user();
-        $data = [];
-
-        if ($user->role === 'admin') {
-            $data['total_mitra'] = User::where('role', 'mitra')->count();
-            $data['total_penyewa'] = User::where('role', 'penyewa')->count();
-            $data['total_transaksi'] = Booking::whereIn('status', ['sukses', 'dibayar'])->count();
-            $data['mitra_baru'] = User::where('role', 'mitra')->latest()->take(5)->get();
-        } elseif ($user->role === 'mitra') {
-            $data['lapangan_aktif'] = Lapangan::where('mitra_id', $user->id)->count();
-        }
-
-        return view('dashboard', $data);
-    })->name('dashboard');
-
+   
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');

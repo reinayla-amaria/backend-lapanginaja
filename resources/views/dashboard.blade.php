@@ -114,9 +114,8 @@
                             <tbody>
                                 @forelse ($riwayat_pesanan as $pesanan)
                                     <tr>
-                                        <td class="border-b py-3 px-4">{{ $pesanan->user->name ?? 'Penyewa' }}</td>
-                                        <td class="border-b py-3 px-4">{{ $pesanan->lapangan->nama_lapangan }}</td>
-                                        <td class="border-b py-3 px-4">
+                                        <td class="border-b py-3 px-4">{{ $pesanan->user->name ?? 'User' }}</td>
+                                        <td class="border-b py-3 px-4">{{ $pesanan->lapangan->nama_lapangan ?? 'Lapangan' }}</td><td class="border-b py-3 px-4">
                                             {{ \Carbon\Carbon::parse($pesanan->tanggal_main)->format('d M Y') }}<br>
                                             <span class="text-xs text-gray-500">{{ $pesanan->jam_mulai }} -
                                                 {{ $pesanan->jam_selesai }}</span>
