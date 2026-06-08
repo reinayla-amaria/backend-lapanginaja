@@ -16,29 +16,29 @@ class BookingController extends Controller
     public function checkoutAPI(Request $request)
     {
 
-     $request->validate([
-        'lapangan_id' => 'required|integer|exists:lapangans,id',
-        'tanggal_main' => 'required|date|after_or_equal:today',
-        'jam_mulai' => 'required|date_format:H:i',
-        'jam_selesai' => 'required|date_format:H:i|after:jam_mulai',
-        'total_harga' => 'required|numeric|min:0',
-    ]);
-    $bentrok = Booking::where('lapangan_id', $request->lapangan_id)
-        ->where('tanggal_main', $request->tanggal_main)
-        ->where('status', 'dibayar')
-        ->where(function ($query) use ($request) {
-            $query->where('jam_mulai', '<', $request->jam_selesai)
-                  ->where('jam_selesai', '>', $request->jam_mulai);
-        })
-        ->exists();
+        $request->validate([
+            'lapangan_id' => 'required|integer|exists:lapangans,id',
+            'tanggal_main' => 'required|date|after_or_equal:today',
+            'jam_mulai' => 'required|date_format:H:i',
+            'jam_selesai' => 'required|date_format:H:i|after:jam_mulai',
+            'total_harga' => 'required|numeric|min:0',
+        ]);
+        $bentrok = Booking::where('lapangan_id', $request->lapangan_id)
+            ->where('tanggal_main', $request->tanggal_main)
+            ->where('status', 'dibayar')
+            ->where(function ($query) use ($request) {
+                $query->where('jam_mulai', '<', $request->jam_selesai)
+                    ->where('jam_selesai', '>', $request->jam_mulai);
+            })
+            ->exists();
 
-    if ($bentrok) {
-        return response()->json([
-            'status' => 'gagal',
-            'pesan' => 'Slot waktu ini sudah dipesan. Silakan pilih waktu lain.',
-        ], 409);
-    }
-    
+        if ($bentrok) {
+            return response()->json([
+                'status' => 'gagal',
+                'pesan' => 'Slot waktu ini sudah dipesan. Silakan pilih waktu lain.',
+            ], 409);
+        }
+
         // 1. Simpan booking pake user_id (Sesuai database lu)
         $booking = Booking::create([
             'user_id' => $request->user()->id,
@@ -76,80 +76,80 @@ class BookingController extends Controller
 
         $snapToken = Snap::getSnapToken($params);
 
-    Payment::create([
-    'booking_id' => $booking->id,
-    'transaction_id' => $order_id,
-    'snap_token' => $snapToken,
-    'jumlah_bayar' => $booking->total_harga,
-    'status' => 'pending'
-]);
+        Payment::create([
+            'booking_id' => $booking->id,
+            'transaction_id' => $order_id,
+            'snap_token' => $snapToken,
+            'jumlah_bayar' => $booking->total_harga,
+            'status' => 'pending'
+        ]);
 
-return response()->json([
-    'status' => 'sukses',
-    'pesan' => 'Booking berhasil dibuat!',
-    'snap_token' => $snapToken,
-    'booking_id' => $booking->id, // tambah ini
-]);
+        return response()->json([
+            'status' => 'sukses',
+            'pesan' => 'Booking berhasil dibuat!',
+            'snap_token' => $snapToken,
+            'booking_id' => $booking->id, // tambah ini
+        ]);
     }
 
 
-public function callbackAPI(Request $request)
-{
-    $serverKey = config('midtrans.server_key');
-    $hashed = hash(
-        "sha512",
-        $request->order_id . $request->status_code . $request->gross_amount . $serverKey
-    );
+    public function callbackAPI(Request $request)
+    {
+        $serverKey = config('midtrans.server_key');
+        $hashed = hash(
+            "sha512",
+            $request->order_id . $request->status_code . $request->gross_amount . $serverKey
+        );
 
-    if ($hashed == $request->signature_key) {
+        if ($hashed == $request->signature_key) {
 
-        $payment = Payment::where('transaction_id', $request->order_id)->first();
+            $payment = Payment::where('transaction_id', $request->order_id)->first();
 
-        if ($payment) {
-            if (
-                $request->transaction_status == 'capture' ||
-                $request->transaction_status == 'settlement'
-            ) {
-                $payment->update([
-                    'status'             => 'sukses',
-                    'metode_pembayaran'  => $request->payment_type ?? 'Midtrans',
-                ]);
-                $payment->booking->update(['status' => 'dibayar']);
-
-                // --- KIRIM FCM NOTIFICATION ---
-                $booking  = $payment->booking->load(['lapangan', 'user']);
-                $fcmToken = $booking->user->fcm_token ?? null;
-
-                if ($fcmToken) {
-                    FcmController::sendBookingNotification($fcmToken, [
-                        'booking_id'        => (string) $booking->id,
-                        'nama_lapangan'     => ($booking->lapangan->mitra->name ?? '') .
-                                              ' - ' . ($booking->lapangan->nama_lapangan ?? ''),
-                        'lokasi'            => $booking->lapangan->lokasi ?? '-',
-                        'tanggal_main'      => $booking->tanggal_main,
-                        'jam_mulai'         => \Carbon\Carbon::parse($booking->jam_mulai)->format('H:i'),
-                        'jam_selesai'       => \Carbon\Carbon::parse($booking->jam_selesai)->format('H:i'),
-                        'total_harga'       => (string) $booking->total_harga,
-                        'user_name' => $booking->user->name ?? 'Penyewa',
+            if ($payment) {
+                if (
+                    $request->transaction_status == 'capture' ||
+                    $request->transaction_status == 'settlement'
+                ) {
+                    $payment->update([
+                        'status' => 'sukses',
                         'metode_pembayaran' => $request->payment_type ?? 'Midtrans',
-                        'transaction_id'    => $request->order_id ?? '-',
                     ]);
-                }
-                // ------------------------------
+                    $payment->booking->update(['status' => 'dibayar']);
 
-            } elseif (
-                $request->transaction_status == 'cancel' ||
-                $request->transaction_status == 'deny' ||
-                $request->transaction_status == 'expire'
-            ) {
-                $payment->update(['status' => 'gagal']);
-                $payment->booking->update(['status' => 'batal']);
+                    // --- KIRIM FCM NOTIFICATION ---
+                    $booking = $payment->booking->load(['lapangan', 'user']);
+                    $fcmToken = $booking->user->fcm_token ?? null;
+
+                    if ($fcmToken) {
+                        FcmController::sendBookingNotification($fcmToken, [
+                            'booking_id' => (string) $booking->id,
+                            'nama_lapangan' => ($booking->lapangan->mitra->name ?? '') .
+                                ' - ' . ($booking->lapangan->nama_lapangan ?? ''),
+                            'lokasi' => $booking->lapangan->lokasi ?? '-',
+                            'tanggal_main' => $booking->tanggal_main,
+                            'jam_mulai' => \Carbon\Carbon::parse($booking->jam_mulai)->format('H:i'),
+                            'jam_selesai' => \Carbon\Carbon::parse($booking->jam_selesai)->format('H:i'),
+                            'total_harga' => (string) $booking->total_harga,
+                            'user_name' => $booking->user->name ?? 'Penyewa',
+                            'metode_pembayaran' => $request->payment_type ?? 'Midtrans',
+                            'transaction_id' => $request->order_id ?? '-',
+                        ]);
+                    }
+                    // ------------------------------
+
+                } elseif (
+                    $request->transaction_status == 'cancel' ||
+                    $request->transaction_status == 'deny' ||
+                    $request->transaction_status == 'expire'
+                ) {
+                    $payment->update(['status' => 'gagal']);
+                    $payment->booking->update(['status' => 'batal']);
+                }
             }
         }
-    }
 
-    return response()->json(['message' => 'Laporan diterima!']);
-}
+        return response()->json(['message' => 'Laporan diterima!']);
+    }
     public function jadwal()
     {
         $mitraId = Auth::id();
@@ -294,13 +294,13 @@ public function callbackAPI(Request $request)
                 $booking->update(['status' => 'maintenance']);
             } else {
                 // Bikin booking 'palsu' khusus buat ngeblokir lapangan pake user_id
-               Booking::create([
-                'lapangan_id' => $request->lapangan_id,
-                'user_id' => Auth::id(),
-                'jam_mulai' => $tanggalMulai,
-                'jam_selesai' => $tanggalSelesai,
-                'status' => 'maintenance',
-                'total_harga' => 0
+                Booking::create([
+                    'lapangan_id' => $request->lapangan_id,
+                    'user_id' => Auth::id(),
+                    'jam_mulai' => $tanggalMulai,
+                    'jam_selesai' => $tanggalSelesai,
+                    'status' => 'maintenance',
+                    'total_harga' => 0
                 ]);
             }
         } else {
@@ -312,78 +312,100 @@ public function callbackAPI(Request $request)
 
         return back()->with('success', 'Status jadwal berhasil diperbarui!');
     }
-   public function myBookings(Request $request)
-{
-    $bookings = Booking::with('lapangan.mitra')
-        ->where('user_id', $request->user()->id)
-        ->orderBy('created_at', 'desc')
-        ->get()
-        ->map(function ($booking) {
-            $namaVenue = $booking->lapangan->mitra->name ?? '';
-            $namaLapangan = $booking->lapangan->nama_lapangan ?? 'Lapangan';
-            
-            return [
-            'id' => $booking->id,
-            'lapangan_id' => $booking->lapangan_id,
-            'mitra_id' => $booking->lapangan->mitra_id ?? '',
-            'mitra_name' => $booking->lapangan->mitra->name ?? '',
-            'nama_lapangan' => $namaVenue . ' - ' . $namaLapangan,
-            'tanggal_main' => $booking->tanggal_main,
-            'jam_mulai' => $booking->jam_mulai,
-            'jam_selesai' => $booking->jam_selesai,
-            'total_harga' => $booking->total_harga,
-            'status' => $booking->status,
-];
-        });
+    public function myBookings(Request $request)
+    {
+        $bookings = Booking::with('lapangan.mitra')
+            ->where('user_id', $request->user()->id)
+            ->orderBy('created_at', 'desc')
+            ->get()
+            ->map(function ($booking) {
+                $namaVenue = $booking->lapangan->mitra->name ?? '';
+                $namaLapangan = $booking->lapangan->nama_lapangan ?? 'Lapangan';
 
-    return response()->json([
-        'status' => 'success',
-        'data' => $bookings,
-    ]);
-    
-}
-public function bookingDetail(Request $request, $id)
-{
-    $booking = Booking::with(['user', 'lapangan', 'lapangan.mitra'])
-        ->find($id);
+                return [
+                    'id' => $booking->id,
+                    'lapangan_id' => $booking->lapangan_id,
+                    'mitra_id' => $booking->lapangan->mitra_id ?? '',
+                    'mitra_name' => $booking->lapangan->mitra->name ?? '',
+                    'nama_lapangan' => $namaVenue . ' - ' . $namaLapangan,
+                    'tanggal_main' => $booking->tanggal_main,
+                    'jam_mulai' => $booking->jam_mulai,
+                    'jam_selesai' => $booking->jam_selesai,
+                    'total_harga' => $booking->total_harga,
+                    'status' => $booking->status,
+                ];
+            });
 
-    if (!$booking || $booking->user_id !== $request->user()->id) {
         return response()->json([
-            'status' => 'error',
-            'message' => 'Tidak ditemukan'
-        ], 404);
+            'status' => 'success',
+            'data' => $bookings,
+        ]);
+
     }
+    public function bookingDetail(Request $request, $id)
+    {
+        $booking = Booking::with(['user', 'lapangan', 'lapangan.mitra'])
+            ->find($id);
 
-    $payment = Payment::where('booking_id', $id)->first();
+        if (!$booking || $booking->user_id !== $request->user()->id) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Tidak ditemukan'
+            ], 404);
+        }
 
-    return response()->json([
-        'status' => 'success',
-        'data' => [
-            'booking' => $booking,
-            'lapangan' => $booking->lapangan,
-            'user' => $booking->user, 
-            'payment' => $payment,
-        ]
-    ]);
-}
-public function index()
-{
-    return response()->json([
-        'message' => 'Halaman transaksi admin'
-    ]);
-}
-public function checkAvailability(Request $request, $id)
-{
-    $tanggal = $request->query('tanggal');
-    
-    $bookings = Booking::where('lapangan_id', $id)
-    ->where('tanggal_main', $tanggal) 
-    ->where('status', 'dibayar')
-    ->get(['jam_mulai', 'jam_selesai', 'status']);
+        $payment = Payment::where('booking_id', $id)->first();
 
-    return response()->json([
-        'status' => 'success',
-        'data' => $bookings
-    ]);
-}
+        return response()->json([
+            'status' => 'success',
+            'data' => [
+                'booking' => $booking,
+                'lapangan' => $booking->lapangan,
+                'user' => $booking->user,
+                'payment' => $payment,
+            ]
+        ]);
+    }
+    public function index(Request $request)
+    {
+        // Nangkep parameter filter dari URL (kalau ada)
+        $status = $request->query('status');
+        $startDate = $request->query('start_date');
+        $endDate = $request->query('end_date');
+
+        // Karena ini Admin, dia bisa narik semua data transaksi dari semua Mitra
+        $query = Booking::with(['user', 'lapangan.mitra']);
+
+        // Filter Status
+        if ($status == 'pending') {
+            $query->where('status', 'pending');
+        } elseif ($status == 'completed') {
+            $query->whereIn('status', ['sukses', 'lunas', 'dibayar']);
+        }
+
+        // Filter Range Tanggal
+        if ($startDate && $endDate) {
+            $query->whereBetween('tanggal_main', [$startDate, $endDate]);
+        }
+
+        // Ambil datanya dan urutkan dari yang terbaru
+        $pesanans = $query->latest('created_at')->get();
+
+        // Kirim datanya ke file view (Blade)
+        return view('transaksi.index', compact('pesanans', 'status', 'startDate', 'endDate'));
+    }
+    public function checkAvailability(Request $request, $id)
+    {
+        $tanggal = $request->query('tanggal');
+
+        $bookings = Booking::where('lapangan_id', $id)
+            ->where('tanggal_main', $tanggal)
+            ->where('status', 'dibayar')
+            ->get(['jam_mulai', 'jam_selesai', 'status']);
+
+        return response()->json([
+            'status' => 'success',
+            'data' => $bookings
+        ]);
+    }
 }
