@@ -8,7 +8,7 @@
         <div class="flex flex-col md:flex-row justify-between items-center mb-4 border-b border-gray-200 pb-3 gap-4">
             
             <div class="flex space-x-6 text-sm font-bold">
-                <a href="{{ route('transaksi.index') }}" 
+                <a href="{{ route('admin.transaksi.index') }}" 
                    class="{{ empty($status) ? 'text-gray-800 border-b-2 border-gray-800' : 'text-gray-400 hover:text-gray-600 transition-colors' }} pb-3">
                    All Order
                 </a>
@@ -22,7 +22,8 @@
                 </a>
             </div>
 
-            <form action="{{ route('transaksi.index') }}" method="GET" class="flex items-center gap-3">
+            <form action="{{ route('admin.transaksi.index')
+             }}" method="GET" class="flex items-center gap-3">
                 @if($status)
                     <input type="hidden" name="status" value="{{ $status }}">
                 @endif

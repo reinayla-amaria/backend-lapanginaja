@@ -350,4 +350,10 @@ public function bookingDetail(Request $request, $id)
         ]
     ]);
 }
+public function index()
+{
+    return response()->json([
+        'message' => 'Halaman transaksi admin'
+    ]);
+}
 }

@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\BookingController;
 use App\Http\Controllers\Api\AuthController; 
 use App\Http\Controllers\Api\LapanganApiController;
+use App\Http\Controllers\Api\FcmController;
 
 // Public - dengan rate limiting
 Route::middleware('throttle:public')->group(function () {

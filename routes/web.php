@@ -2,13 +2,18 @@
 
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Artisan;
+use Carbon\Carbon;
+
 use App\Http\Controllers\LapanganController;
+use App\Http\Controllers\BookingController;
+use App\Http\Controllers\ChatController;
+use App\Http\Controllers\MitraController;
+
 use App\Models\User;
 use App\Models\Lapangan;
 use App\Models\Booking;
-use Carbon\Carbon;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Artisan;
 
 Route::get('/', function () {
     return view('welcome');
@@ -19,24 +24,28 @@ Route::get('/jalanin-migrasi', function () {
     return 'Wih mantap, Migrasi Database Berhasil Bang!';
 });
 
-// Khusus Admin
+//admmin
 Route::middleware(['auth', 'verified', 'role:admin'])->group(function () {
-    // PERBAIKAN 1: Mengubah URL menjadi /kelola-mitra dan pakai resource biar mencakup GET, POST, DELETE
-    // name('mitra') dipakai biar route('mitra.index') di file test kamu tetap nyambung.
-    Route::resource('kelola-mitra', App\Http\Controllers\MitraController::class)->names('mitra');
 
-    // PERBAIKAN 2: Admin sekarang bisa akses halaman lihat transaksi (biar gak error 302 lagi)
-    Route::get('/transaksi', [App\Http\Controllers\BookingController::class, 'index'])->name('admin.transaksi.index');
-    Route::get('/transaksi/export', [App\Http\Controllers\BookingController::class, 'exportCSV'])->name('transaksi.export');
+    Route::get('/transaksi', [BookingController::class, 'index'])
+        ->name('admin.transaksi.index');
+
+    Route::get('/transaksi/export', [BookingController::class, 'exportCSV'])
+        ->name('transaksi.export');
+
+    // KELOLA MITRA
+    Route::resource('kelola-mitra', MitraController::class)->names('mitra');
+
+    // LOGS
+    Route::get('/login-logs', function () {
+        $logs = \App\Models\LoginLog::latest()->paginate(50);
+        return response()->json($logs);
+    });
 });
 
-Route::get('/login-logs', function () {
-    $logs = \App\Models\LoginLog::latest()->paginate(50);
-    return response()->json($logs);
-})->middleware(['auth', 'verified', 'role:admin']);
-
-// Khusus Mitra
+//mitra
 Route::middleware(['auth', 'verified', 'role:mitra'])->group(function () {
+
     Route::get('/lapangan', [LapanganController::class, 'index'])->name('lapangan.index');
     Route::get('/lapangan/create', [LapanganController::class, 'create'])->name('lapangan.create');
     Route::post('/lapangan', [LapanganController::class, 'store'])->name('lapangan.store');
@@ -44,17 +53,17 @@ Route::middleware(['auth', 'verified', 'role:mitra'])->group(function () {
     Route::put('/lapangan/{lapangan}', [LapanganController::class, 'update'])->name('lapangan.update');
     Route::delete('/lapangan/{lapangan}', [LapanganController::class, 'destroy'])->name('lapangan.destroy');
 
-    Route::get('/transaksi', [App\Http\Controllers\BookingController::class, 'indexMitra'])->name('transaksi.index');
-    Route::get('/jadwal-lapangan', [App\Http\Controllers\BookingController::class, 'jadwal'])->name('mitra.jadwal');
-    Route::post('/jadwal-lapangan/update', [App\Http\Controllers\BookingController::class, 'updateJadwal'])->name('mitra.jadwal.update');
+    Route::get('/jadwal-lapangan', [BookingController::class, 'jadwal'])->name('mitra.jadwal');
+    Route::post('/jadwal-lapangan/update', [BookingController::class, 'updateJadwal'])->name('mitra.jadwal.update');
 
-    // Chat mitra
-    Route::get('/mitra/chat', [App\Http\Controllers\ChatController::class, 'index'])->name('mitra.chat');
+    Route::get('/mitra/chat', [ChatController::class, 'index'])->name('mitra.chat');
 });
 
-// Admin & Mitra (dashboard bersama)
+//dashboard
 Route::middleware(['auth', 'verified'])->group(function () {
+
     Route::get('/dashboard', function () {
+
         $user = Auth::user();
         $data = [];
 
@@ -65,16 +74,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
             $data['mitra_baru'] = User::where('role', 'mitra')->latest()->take(5)->get();
         } elseif ($user->role === 'mitra') {
             $data['lapangan_aktif'] = Lapangan::where('mitra_id', $user->id)->count();
-            $data['pesanan_pending'] = Booking::whereHas('lapangan', function ($q) use ($user) {
-                $q->where('mitra_id', $user->id);
-            })->where('status', 'pending')->count();
-            $data['pesanan_hari_ini'] = Booking::whereHas('lapangan', function ($q) use ($user) {
-                $q->where('mitra_id', $user->id);
-            })->whereDate('tanggal_main', Carbon::today())->count();
-            $data['riwayat_pesanan'] = Booking::with(['user', 'lapangan'])
-                ->whereHas('lapangan', function ($q) use ($user) {
-                    $q->where('mitra_id', $user->id);
-                })->latest()->take(5)->get();
         }
 
         return view('dashboard', $data);

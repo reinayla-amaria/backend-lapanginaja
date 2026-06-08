@@ -3,7 +3,6 @@
 namespace Tests\Feature;
 
 use App\Models\User;
-use App\Models\Booking; // Asumsi model lu namanya Booking
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -15,7 +14,15 @@ class TransaksiAdminTest extends TestCase
     {
         return User::factory()->create([
             'role' => 'admin',
+            'email_verified_at' => now(),
         ]);
+    }
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        $this->artisan('migrate');
     }
 
     public function test_admin_bisa_melihat_halaman_pantau_transaksi()
@@ -25,8 +32,6 @@ class TransaksiAdminTest extends TestCase
         $response = $this->actingAs($admin)->get('/transaksi');
 
         $response->assertStatus(200);
-        //$response->assertSee('Lihat Transaksi');
-        //$response->assertSee('Unduh Laporan (CSV)');
     }
 
     public function test_fitur_export_csv_transaksi_berhasil_diunduh()
@@ -35,11 +40,6 @@ class TransaksiAdminTest extends TestCase
 
         $response = $this->actingAs($admin)->get('/transaksi/export');
 
-        // Pastikan status 200 OK
         $response->assertStatus(200);
-
-        // Pastikan response yang dibalikin beneran file CSV
-        //$response->assertHeader('Content-Type', 'text/csv; charset=UTF-8');
-        //$response->assertHeader('Content-Disposition', 'attachment; filename="laporan_transaksi_lapanginaja.csv"');
     }
 }

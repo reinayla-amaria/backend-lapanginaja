@@ -12,12 +12,13 @@ class MitraCrudTest extends TestCase
     use RefreshDatabase;
 
     // Fungsi bantuan buat bikin user Super Admin
-    private function createAdmin()
-    {
-        return User::factory()->create([
-            'role' => 'admin',
-        ]);
-    }
+   private function createAdmin()
+{
+    return User::factory()->create([
+        'role' => 'admin',
+        'email_verified_at' => now(),
+    ]);
+}
 
     public function test_halaman_kelola_mitra_tidak_bisa_diakses_tanpa_login()
     {
