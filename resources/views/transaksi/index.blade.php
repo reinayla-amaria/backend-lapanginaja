@@ -8,22 +8,21 @@
         <div class="flex flex-col md:flex-row justify-between items-center mb-4 border-b border-gray-200 pb-3 gap-4">
             
             <div class="flex space-x-6 text-sm font-bold">
-                <a href="{{ route('admin.transaksi.index') }}" 
+                <a href="{{ url('/transaksi') }}" 
                    class="{{ empty($status) ? 'text-gray-800 border-b-2 border-gray-800' : 'text-gray-400 hover:text-gray-600 transition-colors' }} pb-3">
-                   All Order
+                    All Order
                 </a>
-                <a href="{{ route('transaksi.index', ['status' => 'pending', 'start_date' => $startDate, 'end_date' => $endDate]) }}" 
+                <a href="{{ url('/transaksi') }}?status=pending&start_date={{ $startDate }}&end_date={{ $endDate }}" 
                    class="{{ $status == 'pending' ? 'text-gray-800 border-b-2 border-gray-800' : 'text-gray-400 hover:text-gray-600 transition-colors' }} pb-3">
-                   Pending
+                    Pending
                 </a>
-                <a href="{{ route('transaksi.index', ['status' => 'completed', 'start_date' => $startDate, 'end_date' => $endDate]) }}" 
+                <a href="{{ url('/transaksi') }}?status=completed&start_date={{ $startDate }}&end_date={{ $endDate }}" 
                    class="{{ $status == 'completed' ? 'text-gray-800 border-b-2 border-gray-800' : 'text-gray-400 hover:text-gray-600 transition-colors' }} pb-3">
-                   Completed
+                    Completed
                 </a>
             </div>
 
-            <form action="{{ route('admin.transaksi.index')
-             }}" method="GET" class="flex items-center gap-3">
+            <form action="{{ url('/transaksi') }}" method="GET" class="flex items-center gap-3">
                 @if($status)
                     <input type="hidden" name="status" value="{{ $status }}">
                 @endif
@@ -68,7 +67,7 @@
                         <td class="py-4 px-4 text-sm">
                             @if($pesanan->status == 'pending')
                                 <span class="text-orange-500 font-bold">Pending</span>
-                            @elseif(in_array($pesanan->status, ['sukses', 'lunas']))
+                            @elseif(in_array($pesanan->status, ['sukses', 'lunas', 'dibayar']))
                                 <span class="text-green-500 font-bold">Completed</span>
                             @else
                                 <span class="text-red-500 font-bold">Batal</span>
@@ -85,18 +84,3 @@
                     @empty
                     <tr>
                         <td colspan="7" class="py-16 text-gray-500 font-medium">Belum ada pesanan yang masuk nih bang.</td>
-                    </tr>
-                    @endforelse
-                    
-                </tbody>
-            </table>
-        </div>
-
-        <div class="mt-6 flex justify-end">
-             <a href="{{ route('transaksi.export') }}" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-6 rounded-lg shadow-sm transition-colors">
-                 Unduh Laporan (CSV)
-             </a>
-        </div>
-
-    </div>
-</x-app-layout>
