@@ -84,3 +84,21 @@
                     @empty
                     <tr>
                         <td colspan="7" class="py-16 text-gray-500 font-medium">Belum ada pesanan yang masuk nih bang.</td>
+                        @empty
+                    <tr>
+                        <td colspan="7" class="py-16 text-gray-500 font-medium">Belum ada pesanan yang masuk nih bang.</td>
+                    </tr>
+                    @endforelse
+                    
+                </tbody>
+            </table>
+        </div>
+
+        <div class="mt-6 flex justify-end">
+             <a href="{{ url('/transaksi/export') }}" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-6 rounded-lg shadow-sm transition-colors">
+                 Unduh Laporan (CSV)
+             </a>
+        </div>
+
+    </div>
+</x-app-layout>
