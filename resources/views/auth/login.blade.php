@@ -24,8 +24,8 @@
 
             <div class="absolute top-8 left-8 flex items-center gap-2">
                 <div>
-                    <img src="{{ asset('images/logo.png') }}" alt="Lapangin.Aja Logo"
-                        class="h-10 w-auto object-contain">
+                    <img src="{{ asset('images/logo.png') }}" alt="Logo LapanginAja" class="h-10 w-auto">
+                    <p class="text-xs text-orange-500 font-bold tracking-widest mt-1 uppercase">Badminton Arena</p>
                 </div>
             </div>
 
@@ -93,4 +93,49 @@
                     <div class="flex items-center justify-between mb-8">
                         <label for="remember_me" class="inline-flex items-center">
                             <input id="remember_me" type="checkbox"
-                                class="rounded border-blue-800 bg-white/5 text-orange-500 shadow
+                                class="rounded border-blue-800 bg-white/5 text-orange-500 shadow-sm focus:ring-orange-500 focus:ring-offset-blue-950"
+                                name="remember">
+                            <span class="ms-2 text-sm text-blue-200">Ingat Saya</span>
+                        </label>
+                        @if (Route::has('password.request'))
+                            <a class="text-sm text-blue-300 hover:text-orange-400 transition-colors"
+                                href="{{ route('password.request') }}">Lupa Password?</a>
+                        @endif
+                    </div>
+
+                    <button type="submit"
+                        class="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-3.5 px-4 rounded-xl transition-colors shadow-lg shadow-orange-500/30">
+                        Masuk Sekarang
+                    </button>
+                </form>
+
+                <p class="mt-8 text-center text-blue-300 text-sm">
+                    Belum punya akun GOR?
+                    <a href="{{ route('register') }}"
+                        class="text-orange-400 hover:text-orange-300 font-bold ml-1 transition-colors">Daftar Mitra</a>
+                </p>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        function togglePassword() {
+            const pwdInput = document.getElementById('password');
+            const eyeIcon = document.getElementById('eye-icon');
+            const eyeSlashIcon = document.getElementById('eye-slash-icon');
+
+            if (pwdInput.type === 'password') {
+                pwdInput.type = 'text';
+                eyeIcon.classList.add('hidden');
+                eyeSlashIcon.classList.remove('hidden');
+            } else {
+                pwdInput.type = 'password';
+                eyeIcon.classList.remove('hidden');
+                eyeSlashIcon.classList.add('hidden');
+            }
+        }
+    </script>
+</body>
+
+</html>
