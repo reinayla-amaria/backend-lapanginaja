@@ -22,4 +22,4 @@ Route::middleware(['auth:sanctum', 'role:penyewa'])->group(function () {
     Route::get('/booking/{id}/detail', [BookingController::class, 'bookingDetail']); 
     Route::post('/fcm-token', [FcmController::class, 'saveToken']);
 });
-
+Route::get('/lapangan/{id}/availability', [BookingController::class, 'checkAvailability']);

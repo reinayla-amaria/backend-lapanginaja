@@ -356,4 +356,18 @@ public function index()
         'message' => 'Halaman transaksi admin'
     ]);
 }
+public function checkAvailability(Request $request, $id)
+{
+    $tanggal = $request->query('tanggal');
+    
+    $bookings = Booking::where('lapangan_id', $id)
+        ->where('tanggal_main', $tanggal)
+        ->whereIn('status', ['pending', 'dibayar'])
+        ->get(['jam_mulai', 'jam_selesai', 'status']);
+
+    return response()->json([
+        'status' => 'success',
+        'data' => $bookings
+    ]);
+}
 }
