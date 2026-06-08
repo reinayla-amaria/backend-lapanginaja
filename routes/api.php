@@ -18,6 +18,7 @@ Route::middleware('throttle:public')->group(function () {
 Route::middleware(['auth:sanctum', 'role:penyewa'])->group(function () {
     Route::post('/checkout', [BookingController::class, 'checkoutAPI']);
     Route::get('/my-bookings', [BookingController::class, 'myBookings']);
-    Route::get('/booking/{id}/detail', [BookingController::class, 'bookingDetail']); // TAMBAH INI
-    Route::post('/fcm-token', [FcmController::class, 'saveToken']); // TAMBAH INI
+    Route::get('/booking/{id}/detail', [BookingController::class, 'bookingDetail']); 
+    Route::post('/fcm-token', [FcmController::class, 'saveToken']);
 });
+
