@@ -41,7 +41,7 @@
                                         <div class="flex items-center gap-2">
 
                                             <a href="{{ route('lapangan.edit', $lapangan->id) }}"
-                                                class="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-1 px-3 rounded text-sm shadow-sm transition duration-150 ease-in-out">
+                                                class="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-1 px-3 rounded text-sm transition">
                                                 Edit
                                             </a>
 

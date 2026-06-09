@@ -32,6 +32,9 @@ Route::middleware(['auth', 'verified', 'role:admin'])->group(function () {
 
     Route::get('/transaksi/export', [BookingController::class, 'exportCSV'])
         ->name('transaksi.export');
+    // Tambahkan di dalam route middleware admin
+    Route::get('/transaksi/{id}/edit', [BookingController::class, 'edit'])->name('admin.transaksi.edit');
+    Route::put('/transaksi/{id}', [BookingController::class, 'update'])->name('admin.transaksi.update');
 
     // KELOLA MITRA
     Route::resource('kelola-mitra', MitraController::class)->names('mitra');

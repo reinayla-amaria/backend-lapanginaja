@@ -394,6 +394,24 @@ class BookingController extends Controller
         // Kirim datanya ke file view (Blade)
         return view('transaksi.index', compact('pesanans', 'status', 'startDate', 'endDate'));
     }
+
+    public function edit($id)
+    {
+        $pesanan = Booking::with(['user', 'lapangan'])->findOrFail($id);
+        return view('transaksi.edit', compact('pesanan'));
+    }
+
+    public function update(Request $request, $id)
+    {
+        $request->validate([
+            'status' => 'required|in:pending,sukses,batal',
+        ]);
+
+        $pesanan = Booking::findOrFail($id);
+        $pesanan->update(['status' => $request->status]);
+
+        return redirect()->route('admin.transaksi.index')->with('success', 'Data berhasil diupdate!');
+    }
     public function checkAvailability(Request $request, $id)
     {
         $tanggal = $request->query('tanggal');
