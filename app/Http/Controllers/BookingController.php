@@ -361,7 +361,7 @@ public function bookingDetail(Request $request, $id)
         'data' => [
             'booking' => $booking,
             'lapangan' => $booking->lapangan,
-            'user' => $booking->user,   // 🔥 INI FIX UTAMA
+            'user' => $booking->user, 
             'payment' => $payment,
         ]
     ]);
