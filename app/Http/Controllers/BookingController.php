@@ -16,13 +16,29 @@ class BookingController extends Controller
     public function checkoutAPI(Request $request)
     {
 
-        $request->validate([
+     $request->validate([
         'lapangan_id' => 'required|integer|exists:lapangans,id',
         'tanggal_main' => 'required|date|after_or_equal:today',
         'jam_mulai' => 'required|date_format:H:i',
         'jam_selesai' => 'required|date_format:H:i|after:jam_mulai',
         'total_harga' => 'required|numeric|min:0',
     ]);
+    $bentrok = Booking::where('lapangan_id', $request->lapangan_id)
+        ->where('tanggal_main', $request->tanggal_main)
+        ->where('status', 'dibayar')
+        ->where(function ($query) use ($request) {
+            $query->where('jam_mulai', '<', $request->jam_selesai)
+                  ->where('jam_selesai', '>', $request->jam_mulai);
+        })
+        ->exists();
+
+    if ($bentrok) {
+        return response()->json([
+            'status' => 'gagal',
+            'pesan' => 'Slot waktu ini sudah dipesan. Silakan pilih waktu lain.',
+        ], 409);
+    }
+    
         // 1. Simpan booking pake user_id (Sesuai database lu)
         $booking = Booking::create([
             'user_id' => $request->user()->id,
@@ -361,9 +377,9 @@ public function checkAvailability(Request $request, $id)
     $tanggal = $request->query('tanggal');
     
     $bookings = Booking::where('lapangan_id', $id)
-        ->where('tanggal_main', $tanggal)
-        ->whereIn('status', ['pending', 'dibayar'])
-        ->get(['jam_mulai', 'jam_selesai', 'status']);
+    ->where('tanggal_main', $tanggal) 
+    ->where('status', 'dibayar')
+    ->get(['jam_mulai', 'jam_selesai', 'status']);
 
     return response()->json([
         'status' => 'success',
