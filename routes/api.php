@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\LapanganApiController;
 use App\Http\Controllers\Api\FcmController;
 
+
 // Public - dengan rate limiting
 Route::middleware('throttle:public')->group(function () {
     Route::post('/login', [AuthController::class, 'login']);
@@ -23,3 +24,6 @@ Route::middleware(['auth:sanctum', 'role:penyewa'])->group(function () {
     Route::post('/fcm-token', [FcmController::class, 'saveToken']);
 });
 Route::get('/lapangan/{id}/availability', [BookingController::class, 'checkAvailability']);
+
+Route::post('/verify-otp', [AuthController::class, 'verifyOtp']);
+Route::post('/resend-otp', [AuthController::class, 'resendOtp']);

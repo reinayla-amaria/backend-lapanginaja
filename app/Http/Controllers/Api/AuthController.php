@@ -7,34 +7,101 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
-
+use Illuminate\Support\Facades\Mail;
 class AuthController extends Controller
 {
-    public function register(Request $request)
-    {
-        $request->validate([
-            'name'     => 'required|string',
-            'username' => 'required|string|min:3|unique:users|alpha_dash',
-            'email'    => 'required|email|unique:users',
-            'password' => 'required|min:8',
-        ]);
+  public function register(Request $request)
+{
+    $request->validate([
+        'name'     => 'required|string',
+        'username' => 'required|string|min:3|unique:users|alpha_dash',
+        'email'    => 'required|email|unique:users',
+        'password' => 'required|min:8',
+    ]);
 
-        $user = User::create([
-            'name'     => $request->name,
-            'username' => $request->username,
-            'email'    => $request->email,
-            'password' => Hash::make($request->password),
-        ]);
+    $otp = rand(100000, 999999);
 
-        $token = $user->createToken('auth_token')->plainTextToken;
+    $user = User::create([
+        'name'        => $request->name,
+        'username'    => $request->username,
+        'email'       => $request->email,
+        'password'    => Hash::make($request->password),
+        'otp_code'    => $otp,
+        'otp_expires_at' => now()->addMinutes(10),
+        'is_verified' => false,
+    ]);
 
-        return response()->json([
-            'status'  => 'success',
-            'message' => 'Registrasi berhasil!',
-            'token'   => $token,
-            'user'    => $user,
-        ]);
+    // Kirim OTP ke email
+    Mail::raw("Kode OTP LapanginAja kamu: $otp\nBerlaku 10 menit.", function ($message) use ($user) {
+        $message->to($user->email)->subject('Verifikasi OTP LapanginAja');
+    });
+
+    return response()->json([
+        'status'  => 'success',
+        'message' => 'OTP telah dikirim ke email kamu.',
+        'email'   => $user->email,
+    ]);
+}
+
+public function verifyOtp(Request $request)
+{
+    $request->validate([
+        'email' => 'required|email',
+        'otp'   => 'required|string',
+    ]);
+
+    $user = User::where('email', $request->email)->first();
+
+    if (!$user) {
+        return response()->json(['status' => 'error', 'message' => 'User tidak ditemukan.'], 404);
     }
+
+    if ($user->is_verified) {
+        return response()->json(['status' => 'error', 'message' => 'Akun sudah terverifikasi.'], 400);
+    }
+
+    if ($user->otp_code !== $request->otp) {
+        return response()->json(['status' => 'error', 'message' => 'OTP salah.'], 400);
+    }
+
+    if (now()->gt($user->otp_expires_at)) {
+        return response()->json(['status' => 'error', 'message' => 'OTP sudah kadaluarsa.'], 400);
+    }
+
+    $user->update([
+        'is_verified'    => true,
+        'otp_code'       => null,
+        'otp_expires_at' => null,
+    ]);
+
+    $token = $user->createToken('auth_token')->plainTextToken;
+
+    return response()->json([
+        'status'  => 'success',
+        'message' => 'Akun berhasil diverifikasi!',
+        'token'   => $token,
+        'user'    => $user,
+    ]);
+}
+
+public function resendOtp(Request $request)
+{
+    $request->validate(['email' => 'required|email']);
+    $user = User::where('email', $request->email)->first();
+
+    if (!$user || $user->is_verified) {
+        return response()->json(['status' => 'error', 'message' => 'Tidak valid.'], 400);
+    }
+
+    $otp = rand(100000, 999999);
+    $user->update(['otp_code' => $otp, 'otp_expires_at' => now()->addMinutes(10)]);
+
+    Mail::raw("Kode OTP LapanginAja kamu: $otp\nBerlaku 10 menit.", function ($message) use ($user) {
+        $message->to($user->email)->subject('Verifikasi OTP LapanginAja');
+    });
+
+    return response()->json(['status' => 'success', 'message' => 'OTP baru telah dikirim.']);
+}
 
     public function login(Request $request)
     {
@@ -44,7 +111,12 @@ class AuthController extends Controller
         ]);
 
         $user = User::where('email', $request->email)->first();
-
+        if ($user && !$user->is_verified) {
+    return response()->json([
+        'status'  => 'error',
+        'message' => 'Akun belum diverifikasi. Cek email kamu.',
+    ], 403);
+}
         // Cek apakah akun sedang terkunci
         if ($user && $user->locked_until && now()->lt($user->locked_until)) {
             $menitSisa = now()->diffInMinutes($user->locked_until) + 1;
